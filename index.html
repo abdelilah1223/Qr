@@ -1,592 +1,497 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المنتجات بالباركود</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --success-color: #4cc9f0;
-            --danger-color: #f72585;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            color: var(--dark-color);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 0;
-            text-align: center;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-        
-        header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        
-        header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin-bottom: 30px;
-        }
-        
-        .card-title {
-            font-size: 22px;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #d1146a;
-        }
-        
-        .btn-success {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background-color: #218838;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: border 0.3s ease;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-        
-        .scanner-container {
-            text-align: center;
-            margin: 30px 0;
-        }
-        
-        #scanner {
-            width: 100%;
-            max-width: 500px;
-            height: 300px;
-            margin: 0 auto;
-            position: relative;
-            overflow: hidden;
-            background-color: #000;
-        }
-        
-        #scanner video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .scanner-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
-            pointer-events: none;
-        }
-        
-        .scanner-frame {
-            width: 80%;
-            height: 60%;
-            border: 4px solid rgba(255, 255, 255, 0.5);
-            border-radius: 10px;
-            position: relative;
-            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7);
-        }
-        
-        .scanner-frame::before, .scanner-frame::after {
-            content: '';
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-color: var(--primary-color);
-            border-style: solid;
-            border-width: 0;
-        }
-        
-        .scanner-frame::before {
-            top: 0;
-            left: 0;
-            border-left-width: 4px;
-            border-top-width: 4px;
-            border-top-left-radius: 5px;
-        }
-        
-        .scanner-frame::after {
-            top: 0;
-            right: 0;
-            border-right-width: 4px;
-            border-top-width: 4px;
-            border-top-right-radius: 5px;
-        }
-        
-        .scanner-frame-corner-bottom::before, 
-        .scanner-frame-corner-bottom::after {
-            content: '';
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-color: var(--primary-color);
-            border-style: solid;
-            border-width: 0;
-            bottom: 0;
-        }
-        
-        .scanner-frame-corner-bottom::before {
-            left: 0;
-            border-left-width: 4px;
-            border-bottom-width: 4px;
-            border-bottom-left-radius: 5px;
-        }
-        
-        .scanner-frame-corner-bottom::after {
-            right: 0;
-            border-right-width: 4px;
-            border-bottom-width: 4px;
-            border-bottom-right-radius: 5px;
-        }
-        
-        .scanner-guide {
-            color: white;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 16px;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        
-        .scanner-controls {
-            margin-top: 20px;
-        }
-        
-        .camera-selector {
-            margin-top: 15px;
-        }
-        
-        .product-details {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .product-image {
-            width: 100%;
-            max-width: 300px;
-            height: auto;
-            border-radius: 8px;
-            margin: 0 auto;
-            display: block;
-        }
-        
-        .product-info {
-            flex: 1;
-        }
-        
-        .product-name {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: var(--primary-color);
-        }
-        
-        .product-price {
-            font-size: 20px;
-            font-weight: bold;
-            color: #28a745;
-            margin-bottom: 15px;
-        }
-        
-        .product-id {
-            font-size: 16px;
-            color: #6c757d;
-            margin-bottom: 15px;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .product-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .product-card-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-        
-        .product-card-body {
-            padding: 15px;
-        }
-        
-        .product-card-title {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: var(--primary-color);
-        }
-        
-        .product-card-price {
-            font-weight: bold;
-            color: #28a745;
-            margin-bottom: 10px;
-        }
-        
-        .product-card-id {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #6c757d;
-        }
-        
-        .empty-state-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-            color: #dee2e6;
-        }
-        
-        .image-preview-container {
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .preview-image {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        
-        @media (min-width: 768px) {
-            .product-details {
-                flex-direction: row;
-            }
-            
-            .product-image {
-                margin: 0;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة المنتجات بالباركود</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2980b9;
+      --success-color: #2ecc71;
+      --danger-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --dark-color: #2c3e50;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f4f4f4;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 0;
+      border-radius: 0 0 15px 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1, h2, h3 {
+      color: var(--dark-color);
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 400px;
+      margin: 20px auto;
+      position: relative;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .scanner-frame {
+      width: 80%;
+      height: 60%;
+      border: 4px solid rgba(255, 255, 255, 0.5);
+      border-radius: 15px;
+      position: relative;
+      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.6);
+    }
+
+    .scanner-frame::before, .scanner-frame::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: var(--primary-color);
+      border-style: solid;
+      border-width: 0;
+    }
+
+    .scanner-frame::before {
+      top: 0;
+      left: 0;
+      border-left-width: 4px;
+      border-top-width: 4px;
+      border-top-left-radius: 10px;
+    }
+
+    .scanner-frame::after {
+      top: 0;
+      right: 0;
+      border-right-width: 4px;
+      border-top-width: 4px;
+      border-top-right-radius: 10px;
+    }
+
+    .scanner-frame-corner-bottom::before, 
+    .scanner-frame-corner-bottom::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: var(--primary-color);
+      border-style: solid;
+      border-width: 0;
+      bottom: 0;
+    }
+
+    .scanner-frame-corner-bottom::before {
+      left: 0;
+      border-left-width: 4px;
+      border-bottom-width: 4px;
+      border-bottom-left-radius: 10px;
+    }
+
+    .scanner-frame-corner-bottom::after {
+      right: 0;
+      border-right-width: 4px;
+      border-bottom-width: 4px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .scanner-guide {
+      color: white;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 16px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+
+    #registerForm, #productInfo {
+      margin: 30px auto;
+      max-width: 500px;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"], 
+    input[type="number"],
+    input[type="file"] {
+      padding: 12px 15px;
+      margin: 10px 0;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    }
+
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 10px 5px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .btn-secondary {
+      background-color: #95a5a6;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #7f8c8d;
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #c0392b;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin: 20px auto;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .card img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border: 3px solid var(--light-color);
+    }
+
+    .product-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
+      padding: 0 15px;
+    }
+
+    .product-item {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+
+    .product-item:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-item img {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin-bottom: 15px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+      grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+      font-size: 50px;
+      margin-bottom: 15px;
+      color: #bdc3c7;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      .product-list {
+        grid-template-columns: 1fr;
+      }
+      
+      #registerForm, #productInfo {
+        width: 90%;
+        padding: 15px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1><i class="fas fa-barcode"></i> نظام إدارة المنتجات بالباركود وQR Code</h1>
-            <p>مسح وإدارة المنتجات بسهولة باستخدام الباركود أو QR Code</p>
-        </div>
-    </header>
-    
+
+  <header>
     <div class="container">
-        <div id="scan-page">
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-qrcode"></i> مسح الباركود أو QR Code</h2>
-                
-                <div class="scanner-container">
-                    <div id="scanner">
-                        <div class="scanner-overlay">
-                            <div class="scanner-frame">
-                                <div class="scanner-frame-corner-bottom"></div>
-                            </div>
-                            <div class="scanner-guide">
-                                <i class="fas fa-camera"></i> اضغط على "بدء المسح" لتفعيل الكاميرا
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="scanner-controls">
-                        <button id="start-scanner" class="btn btn-primary">
-                            <i class="fas fa-play"></i> بدء المسح
-                        </button>
-                        <button id="stop-scanner" class="btn btn-secondary" disabled>
-                            <i class="fas fa-stop"></i> إيقاف المسح
-                        </button>
-                    </div>
-                    
-                    <div class="camera-selector">
-                        <select id="camera-select" class="form-control" style="max-width: 300px; margin: 0 auto;">
-                            <option value="">اختر الكاميرا...</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="actions">
-                    <button id="view-all-btn" class="btn btn-secondary">
-                        <i class="fas fa-boxes"></i> عرض جميع المنتجات
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="product-page" style="display: none;">
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-box-open"></i> تفاصيل المنتج</h2>
-                
-                <div class="product-details">
-                    <img id="product-image" src="https://via.placeholder.com/300" alt="صورة المنتج" class="product-image">
-                    
-                    <div class="product-info">
-                        <h3 id="product-name" class="product-name">اسم المنتج</h3>
-                        <p id="product-price" class="product-price">السعر: 0.00 د.م</p>
-                        <p id="product-id" class="product-id">رقم الباركود: 123456789</p>
-                        
-                        <div class="actions">
-                            <button id="back-to-scan" class="btn btn-primary">
-                                <i class="fas fa-arrow-left"></i> العودة للمسح
-                            </button>
-                            <button id="edit-product" class="btn btn-success">
-                                <i class="fas fa-edit"></i> تعديل المنتج
-                            </button>
-                            <button id="delete-product" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> حذف المنتج
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="register-page" style="display: none;">
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-plus-circle"></i> تسجيل منتج جديد</h2>
-                
-                <form id="register-form">
-                    <div class="form-group">
-                        <label for="barcode"><i class="fas fa-barcode"></i> رقم الباركود/QR Code</label>
-                        <input type="text" id="barcode" class="form-control" required readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="name"><i class="fas fa-tag"></i> اسم المنتج</label>
-                        <input type="text" id="name" class="form-control" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="price"><i class="fas fa-money-bill-wave"></i> السعر</label>
-                        <input type="number" id="price" class="form-control" step="0.01" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="image-upload"><i class="fas fa-image"></i> صورة المنتج</label>
-                        <input type="file" id="image-upload" class="form-control" accept="image/*">
-                        <input type="hidden" id="image" class="form-control">
-                    </div>
-                    
-                    <div id="image-preview" class="image-preview-container" style="display: none;">
-                        <img id="preview-image" src="#" alt="معاينة الصورة" class="preview-image">
-                    </div>
-                    
-                    <div class="actions">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> حفظ المنتج
-                        </button>
-                        <button type="button" id="cancel-register" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> إلغاء
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <div id="all-products-page" style="display: none;">
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-boxes"></i> جميع المنتجات</h2>
-                
-                <div class="actions">
-                    <button id="back-to-scan-from-list" class="btn btn-primary">
-                        <i class="fas fa-arrow-left"></i> العودة للمسح
-                    </button>
-                </div>
-                
-                <div id="products-list" class="products-grid">
-                    <!-- المنتجات ستظهر هنا -->
-                </div>
-            </div>
-        </div>
+      <h1><i class="fas fa-barcode"></i> نظام إدارة المنتجات بالباركود</h1>
+      <p>مسح وإدارة المنتجات بسهولة باستخدام الباركود</p>
     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // عناصر الصفحة
-            const scanPage = document.getElementById('scan-page');
-            const productPage = document.getElementById('product-page');
-            const registerPage = document.getElementById('register-page');
-            const allProductsPage = document.getElementById('all-products-page');
-            
-            // عناصر الماسح الضوئي
-            const scannerElement = document.getElementById('scanner');
-            const startScannerButton = document.getElementById('start-scanner');
-            const stopScannerButton = document.getElementById('stop-scanner');
-            const cameraSelect = document.getElementById('camera-select');
-            
-            // عناصر صفحة المنتج
-            const productNameElement = document.getElementById('product-name');
-            const productPriceElement = document.getElementById('product-price');
-            const productIdElement = document.getElementById('product-id');
-            const productImageElement = document.getElementById('product-image');
-            const backToScanButton = document.getElementById('back-to-scan');
-            const editProductButton = document.getElementById('edit-product');
-            const deleteProductButton = document.getElementById('delete-product');
-            
-            // عناصر صفحة التسجيل
-            const registerForm = document.getElementById('register-form');
-            const barcodeInput = document.getElementById('barcode');
-            const nameInput = document.getElementById('name');
-            const priceInput = document.getElementById('price');
-            const imageInput = document.getElementById('image');
-            const imageUpload = document.getElementById('image-upload');
-            const imagePreview = document.getElementById('image-preview');
-            const previewImage = document.getElementById('preview-image');
-            const cancelRegisterButton = document.getElementById('cancel-register');
-            
-            // عناصر صفحة جميع المنتجات
-            const viewAllButton = document.getElementById('view-all-btn');
-            const backToScanFromListButton = document.getElementById('back-to-scan-from-list');
-            const productsListElement = document.getElementById('products-list');
-            
-            // متغيرات التطبيق
-            let currentBarcode = '';
-            let html5QrCode = null;
-            let availableCameras = [];
-            
-            // تهيئة الماسح الضوئي
-            function initScanner() {
-                // إنشاء مثيل جديد للماسح الضوئي
-                html5QrCode = new Html5Qrcode("scanner");
-                
-                // جلب قائمة الكاميرات المتاحة
-                Html5Qrcode.getCameras().then(cameras => {
-                    availableCameras = cameras;
-                    updateCameraList();
-                    
-                    // إذا كان هناك كاميرا واحدة، نختارها تلقائياً
-                    if (availableCameras.length === 1) {
-                        cameraSelect.value = availableCameras[0].id;
-                    }
-                }).catch(err => {
-                    console.error("خطأ في جلب الكاميرات:", err);
-                    availableCameras = [];
-                    updateCameraList();
-                    
-                    // عرض رسالة خطأ في واجهة المستخدم
-                    scannerElement.innerHTML = `
-                        <div class="scanner-overlay">
-                            <div style="color: white; text-align: center; padding: 20px;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i>
-                                <h3>لا يمكن الوصول إلى الكاميرا</h3>
-                   
+  </header>
+
+  <div class="container">
+    <h2><i class="fas fa-qrcode"></i> مسح باركود المنتج</h2>
+    <div id="reader">
+      <div class="scanner-overlay">
+        <div class="scanner-frame">
+          <div class="scanner-frame-corner-bottom"></div>
+        </div>
+        <div class="scanner-guide">
+          <i class="fas fa-camera"></i> قم بتوجيه الكاميرا نحو الباركود
+        </div>
+      </div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <h3><i class="fas fa-plus-circle"></i> تسجيل منتج جديد</h3>
+      <input type="text" id="productName" placeholder="اسم المنتج" required>
+      <input type="number" id="productPrice" placeholder="سعر المنتج" required>
+      <input type="file" accept="image/*" id="productImage" required>
+      <div class="actions">
+        <button class="btn-primary" onclick="saveProduct()">
+          <i class="fas fa-save"></i> حفظ المنتج
+        </button>
+        <button class="btn-secondary" onclick="resetScanner()">
+          <i class="fas fa-times"></i> إلغاء
+        </button>
+      </div>
+    </div>
+
+    <div id="productInfo" style="display:none;">
+      <div class="card" id="productCard"></div>
+      <div class="actions">
+        <button class="btn-primary" onclick="resetScanner()">
+          <i class="fas fa-arrow-left"></i> العودة للمسح
+        </button>
+        <button class="btn-danger" onclick="deleteCurrentProduct()">
+          <i class="fas fa-trash"></i> حذف المنتج
+        </button>
+      </div>
+    </div>
+
+    <h3><i class="fas fa-boxes"></i> جميع المنتجات المسجلة</h3>
+    <div id="allProducts" class="product-list"></div>
+  </div>
+
+  <script>
+    let currentBarcode = null;
+    let html5QrcodeScanner = null;
+
+    function onScanSuccess(decodedText) {
+      currentBarcode = decodedText;
+      const saved = localStorage.getItem(decodedText);
+
+      html5QrcodeScanner.pause();
+
+      if (saved) {
+        showProductInfo(JSON.parse(saved));
+      } else {
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('productInfo').style.display = 'none';
+      }
+    }
+
+    function showProductInfo(data) {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('productInfo').style.display = 'block';
+
+      document.getElementById('productCard').innerHTML = `
+        <img src="${data.image}" alt="صورة المنتج">
+        <h3>${data.name}</h3>
+        <p><strong>السعر:</strong> ${data.price} د.م</p>
+        <p><strong>الباركود:</strong> ${data.barcode}</p>
+      `;
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('productName').value;
+      const price = document.getElementById('productPrice').value;
+      const imageInput = document.getElementById('productImage');
+      const file = imageInput.files[0];
+
+      if (!name || !price || !file) {
+        alert("يرجى إدخال جميع البيانات المطلوبة");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imageBase64 = e.target.result;
+        const productData = {
+          name,
+          price,
+          image: imageBase64,
+          barcode: currentBarcode
+        };
+
+        localStorage.setItem(currentBarcode, JSON.stringify(productData));
+        showProductInfo(productData);
+        showAllProducts();
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function resetScanner() {
+      document.getElementById('productInfo').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('productName').value = '';
+      document.getElementById('productPrice').value = '';
+      document.getElementById('productImage').value = '';
+      
+      if (html5QrcodeScanner && html5QrcodeScanner.isPaused) {
+        html5QrcodeScanner.resume();
+      }
+    }
+
+    function deleteCurrentProduct() {
+      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+        localStorage.removeItem(currentBarcode);
+        resetScanner();
+        showAllProducts();
+      }
+    }
+
+    function deleteProduct(barcode) {
+      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+        localStorage.removeItem(barcode);
+        showAllProducts();
+        
+        if (currentBarcode === barcode) {
+          resetScanner();
+        }
+      }
+    }
+
+    function showAllProducts() {
+      const allDiv = document.getElementById('allProducts');
+      allDiv.innerHTML = '';
+
+      let hasProducts = false;
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          if (!data || !data.name) continue;
+
+          hasProducts = true;
+          
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          item.innerHTML = `
+            <img src="${data.image}" alt="${data.name}">
+            <h4>${data.name}</h4>
+            <p><strong>السعر:</strong> ${data.price} د.م</p>
+            <p><strong>الباركود:</strong> ${data.barcode}</p>
+            <button class="btn-danger" onclick="deleteProduct('${key}')">
+              <i class="fas fa-trash"></i> حذف
+            </button>
+          `;
+          allDiv.appendChild(item);
+        } catch(e) {
+          continue;
+        }
+      }
+
+      if (!hasProducts) {
+        allDiv.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>لا توجد منتجات مسجلة</h3>
+            <p>قم بمسح الباركود لإضافة منتج جديد</p>
+          </div>
+        `;
+      }
+    }
+
+    // بدء المسح عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      html5QrcodeScanner = new Html5QrcodeScanner("reader", {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ]
+      });
+
+      html5QrcodeScanner.render(onScanSuccess);
+      showAllProducts();
+    });
+  </script>
+
+</body>
+</html>
