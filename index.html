@@ -6,6 +6,7 @@
     <title>نظام إدارة المنتجات بالباركود</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
     <style>
         :root {
             --primary-color: #4361ee;
@@ -160,24 +161,45 @@
             justify-content: center;
             flex-direction: column;
             background-color: #f9f9f9;
+            position: relative;
+            overflow: hidden;
         }
         
         #scanner video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 8px;
         }
         
         .scanner-placeholder {
             padding: 20px;
             text-align: center;
+            z-index: 1;
         }
         
         .scanner-icon {
             font-size: 50px;
             color: var(--primary-color);
             margin-bottom: 15px;
+        }
+        
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 18px;
+            z-index: 2;
+        }
+        
+        .scanner-controls {
+            margin-top: 20px;
         }
         
         .product-details {
@@ -283,6 +305,10 @@
             color: #dee2e6;
         }
         
+        .camera-selector {
+            margin-top: 15px;
+        }
+        
         @media (min-width: 768px) {
             .product-details {
                 flex-direction: row;
@@ -297,7 +323,7 @@
 <body>
     <header>
         <div class="container">
-            <h1><i class="fas fa-barcode"></i> نظام إدارة المنتجات بالباركود</h1>
+            <h1><i class="fas fa-barcode"></i> نظام إدارة المنتجات بالباركود وQR Code</h1>
             <p>مسح وإدارة المنتجات بسهولة باستخدام الباركود أو QR Code</p>
         </div>
     </header>
@@ -305,7 +331,7 @@
     <div class="container">
         <div id="scan-page">
             <div class="card">
-                <h2 class="card-title"><i class="fas fa-qrcode"></i> مسح الباركود</h2>
+                <h2 class="card-title"><i class="fas fa-qrcode"></i> مسح الباركود أو QR Code</h2>
                 
                 <div class="scanner-container">
                     <div id="scanner">
@@ -313,15 +339,24 @@
                             <div class="scanner-icon">
                                 <i class="fas fa-barcode"></i>
                             </div>
-                            <p>يتم تحميل الماسح الضوئي...</p>
-                            <p>أو يمكنك إدخال الباركود يدويًا</p>
+                            <p>جاري تحميل الماسح الضوئي...</p>
                         </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="manual-barcode"><i class="fas fa-keyboard"></i> إدخال الباركود يدويًا</label>
-                    <input type="text" id="manual-barcode" class="form-control" placeholder="أدخل رقم الباركود هنا">
+                    
+                    <div class="scanner-controls">
+                        <button id="start-scanner" class="btn btn-primary">
+                            <i class="fas fa-play"></i> بدء المسح
+                        </button>
+                        <button id="stop-scanner" class="btn btn-secondary" disabled>
+                            <i class="fas fa-stop"></i> إيقاف المسح
+                        </button>
+                    </div>
+                    
+                    <div class="camera-selector">
+                        <select id="camera-select" class="form-control" style="max-width: 300px; margin: 0 auto;">
+                            <option value="">اختر الكاميرا...</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <div class="actions">
@@ -366,7 +401,7 @@
                 
                 <form id="register-form">
                     <div class="form-group">
-                        <label for="barcode"><i class="fas fa-barcode"></i> رقم الباركود</label>
+                        <label for="barcode"><i class="fas fa-barcode"></i> رقم الباركود/QR Code</label>
                         <input type="text" id="barcode" class="form-control" required readonly>
                     </div>
                     
@@ -381,8 +416,13 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="image"><i class="fas fa-image"></i> صورة المنتج (رابط)</label>
-                        <input type="url" id="image" class="form-control" placeholder="https://example.com/image.jpg">
+                        <label for="image-upload"><i class="fas fa-image"></i> صورة المنتج</label>
+                        <input type="file" id="image-upload" class="form-control" accept="image/*">
+                        <input type="hidden" id="image" class="form-control">
+                    </div>
+                    
+                    <div id="image-preview" style="margin-top: 10px; display: none;">
+                        <img id="preview-image" src="#" alt="معاينة الصورة" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
                     </div>
                     
                     <div class="actions">
@@ -414,7 +454,6 @@
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // عناصر الصفحة
@@ -423,9 +462,11 @@
             const registerPage = document.getElementById('register-page');
             const allProductsPage = document.getElementById('all-products-page');
             
-            // عناصر المسح
+            // عناصر الماسح الضوئي
             const scannerElement = document.getElementById('scanner');
-            const manualBarcodeInput = document.getElementById('manual-barcode');
+            const startScannerButton = document.getElementById('start-scanner');
+            const stopScannerButton = document.getElementById('stop-scanner');
+            const cameraSelect = document.getElementById('camera-select');
             
             // عناصر صفحة المنتج
             const productNameElement = document.getElementById('product-name');
@@ -442,6 +483,9 @@
             const nameInput = document.getElementById('name');
             const priceInput = document.getElementById('price');
             const imageInput = document.getElementById('image');
+            const imageUpload = document.getElementById('image-upload');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImage = document.getElementById('preview-image');
             const cancelRegisterButton = document.getElementById('cancel-register');
             
             // عناصر صفحة جميع المنتجات
@@ -451,127 +495,79 @@
             
             // متغيرات التطبيق
             let currentBarcode = '';
-            let isScannerActive = false;
+            let html5QrCode = null;
+            let availableCameras = [];
             
             // تهيئة الماسح الضوئي
             function initScanner() {
-                Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: scannerElement,
-                        constraints: {
-                            width: 480,
-                            height: 320,
-                            facingMode: "environment"
-                        },
-                    },
-                    decoder: {
-                        readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader", "qrcode_reader"]
-                    },
-                    locate: true
-                }, function(err) {
-                    if (err) {
-                        console.error(err);
-                        scannerElement.innerHTML = `
-                            <div class="scanner-placeholder">
-                                <div class="scanner-icon" style="color: var(--danger-color);">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <p>حدث خطأ في تحميل الماسح الضوئي</p>
-                                <p>يمكنك استخدام إدخال الباركود يدويًا</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    scannerElement.innerHTML = '<video autoplay playsinline></video>';
-                    Quagga.start();
-                    isScannerActive = true;
-                    
-                    // اكتشاف الباركود
-                    Quagga.onDetected(function(result) {
-                        const code = result.codeResult.code;
-                        handleBarcode(code);
-                    });
+                // مسح العناصر الموجودة
+                scannerElement.innerHTML = '<div class="scanner-placeholder"><div class="scanner-icon"><i class="fas fa-barcode"></i></div><p>اضغط على "بدء المسح" لتفعيل الماسح الضوئي</p></div>';
+                
+                // إنشاء مثيل جديد للماسح الضوئي
+                html5QrCode = new Html5Qrcode("scanner");
+                
+                // جلب قائمة الكاميرات المتاحة
+                Html5Qrcode.getCameras().then(cameras => {
+                    availableCameras = cameras;
+                    updateCameraList();
+                }).catch(err => {
+                    console.error("خطأ في جلب الكاميرات:", err);
+                    availableCameras = [];
+                    updateCameraList();
                 });
             }
             
-            // التعامل مع الباركود
-            function handleBarcode(barcode) {
-                if (!barcode) return;
+            // تحديث قائمة الكاميرات
+            function updateCameraList() {
+                cameraSelect.innerHTML = '<option value="">اختر الكاميرا...</option>';
                 
-                currentBarcode = barcode;
-                manualBarcodeInput.value = barcode;
-                
-                // البحث في localStorage
-                const products = JSON.parse(localStorage.getItem('products')) || {};
-                
-                if (products[barcode]) {
-                    showProduct(products[barcode]);
-                } else {
-                    showRegisterForm(barcode);
+                if (availableCameras.length === 0) {
+                    cameraSelect.innerHTML += '<option value="" disabled>لم يتم العثور على كاميرات</option>';
+                    return;
                 }
+                
+                availableCameras.forEach(camera => {
+                    cameraSelect.innerHTML += `<option value="${camera.id}">${camera.label || `كاميرا ${camera.id}`}</option>`;
+                });
             }
             
-            // عرض صفحة المنتج
-            function showProduct(product) {
-                productNameElement.textContent = product.name;
-                productPriceElement.textContent = `السعر: ${product.price} د.م`;
-                productIdElement.textContent = `رقم الباركود: ${product.barcode}`;
-                productImageElement.src = product.image || 'https://via.placeholder.com/300';
+            // بدء المسح
+            startScannerButton.addEventListener('click', function() {
+                const cameraId = cameraSelect.value;
                 
-                scanPage.style.display = 'none';
-                productPage.style.display = 'block';
-                registerPage.style.display = 'none';
-                allProductsPage.style.display = 'none';
-                
-                if (isScannerActive) {
-                    Quagga.stop();
-                    isScannerActive = false;
+                if (!cameraId) {
+                    alert('الرجاء اختيار كاميرا أولاً');
+                    return;
                 }
-            }
-            
-            // عرض صفحة التسجيل
-            function showRegisterForm(barcode) {
-                barcodeInput.value = barcode;
-                nameInput.value = '';
-                priceInput.value = '';
-                imageInput.value = '';
                 
-                scanPage.style.display = 'none';
-                productPage.style.display = 'none';
-                registerPage.style.display = 'block';
-                allProductsPage.style.display = 'none';
+                // تكوين الماسح الضوئي
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    supportedScanTypes: [
+                        Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+                        Html5QrcodeScanType.SCAN_TYPE_FILE
+                    ],
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E,
+                        Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.CODE_93,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.ITF,
+                        Html5QrcodeSupportedFormats.QR_CODE
+                    ]
+                };
                 
-                if (isScannerActive) {
-                    Quagga.stop();
-                    isScannerActive = false;
-                }
-            }
-            
-            // عرض صفحة المسح
-            function showScanPage() {
-                scanPage.style.display = 'block';
-                productPage.style.display = 'none';
-                registerPage.style.display = 'none';
-                allProductsPage.style.display = 'none';
-                
-                manualBarcodeInput.value = '';
-                currentBarcode = '';
-                
-                if (!isScannerActive) {
-                    initScanner();
-                }
-            }
-            
-            // عرض جميع المنتجات
-            function showAllProducts() {
-                const products = JSON.parse(localStorage.getItem('products')) || {};
-                
-                productsListElement.innerHTML = '';
-                
-                if (Object.keys(products).length === 0) {
-                    productsListElement.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empt
+                // بدء المسح
+                html5QrCode.start(
+                    cameraId,
+                    config,
+                    onScanSuccess,
+                    onScanError
+                ).then(() => {
+                    startScannerButton.disabled = true;
+                    stopScan
