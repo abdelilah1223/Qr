@@ -154,33 +154,15 @@
             max-width: 500px;
             height: 300px;
             margin: 0 auto;
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            background-color: #f9f9f9;
             position: relative;
             overflow: hidden;
+            background-color: #000;
         }
         
         #scanner video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        
-        .scanner-placeholder {
-            padding: 20px;
-            text-align: center;
-            z-index: 1;
-        }
-        
-        .scanner-icon {
-            font-size: 50px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
         }
         
         .scanner-overlay {
@@ -190,16 +172,90 @@
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 18px;
             z-index: 2;
+            pointer-events: none;
+        }
+        
+        .scanner-frame {
+            width: 80%;
+            height: 60%;
+            border: 4px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7);
+        }
+        
+        .scanner-frame::before, .scanner-frame::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-color: var(--primary-color);
+            border-style: solid;
+            border-width: 0;
+        }
+        
+        .scanner-frame::before {
+            top: 0;
+            left: 0;
+            border-left-width: 4px;
+            border-top-width: 4px;
+            border-top-left-radius: 5px;
+        }
+        
+        .scanner-frame::after {
+            top: 0;
+            right: 0;
+            border-right-width: 4px;
+            border-top-width: 4px;
+            border-top-right-radius: 5px;
+        }
+        
+        .scanner-frame-corner-bottom::before, 
+        .scanner-frame-corner-bottom::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-color: var(--primary-color);
+            border-style: solid;
+            border-width: 0;
+            bottom: 0;
+        }
+        
+        .scanner-frame-corner-bottom::before {
+            left: 0;
+            border-left-width: 4px;
+            border-bottom-width: 4px;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .scanner-frame-corner-bottom::after {
+            right: 0;
+            border-right-width: 4px;
+            border-bottom-width: 4px;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .scanner-guide {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
         }
         
         .scanner-controls {
             margin-top: 20px;
+        }
+        
+        .camera-selector {
+            margin-top: 15px;
         }
         
         .product-details {
@@ -305,8 +361,16 @@
             color: #dee2e6;
         }
         
-        .camera-selector {
-            margin-top: 15px;
+        .image-preview-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
         
         @media (min-width: 768px) {
@@ -335,11 +399,13 @@
                 
                 <div class="scanner-container">
                     <div id="scanner">
-                        <div class="scanner-placeholder">
-                            <div class="scanner-icon">
-                                <i class="fas fa-barcode"></i>
+                        <div class="scanner-overlay">
+                            <div class="scanner-frame">
+                                <div class="scanner-frame-corner-bottom"></div>
                             </div>
-                            <p>جاري تحميل الماسح الضوئي...</p>
+                            <div class="scanner-guide">
+                                <i class="fas fa-camera"></i> اضغط على "بدء المسح" لتفعيل الكاميرا
+                            </div>
                         </div>
                     </div>
                     
@@ -421,8 +487,8 @@
                         <input type="hidden" id="image" class="form-control">
                     </div>
                     
-                    <div id="image-preview" style="margin-top: 10px; display: none;">
-                        <img id="preview-image" src="#" alt="معاينة الصورة" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                    <div id="image-preview" class="image-preview-container" style="display: none;">
+                        <img id="preview-image" src="#" alt="معاينة الصورة" class="preview-image">
                     </div>
                     
                     <div class="actions">
@@ -500,9 +566,6 @@
             
             // تهيئة الماسح الضوئي
             function initScanner() {
-                // مسح العناصر الموجودة
-                scannerElement.innerHTML = '<div class="scanner-placeholder"><div class="scanner-icon"><i class="fas fa-barcode"></i></div><p>اضغط على "بدء المسح" لتفعيل الماسح الضوئي</p></div>';
-                
                 // إنشاء مثيل جديد للماسح الضوئي
                 html5QrCode = new Html5Qrcode("scanner");
                 
@@ -510,64 +573,20 @@
                 Html5Qrcode.getCameras().then(cameras => {
                     availableCameras = cameras;
                     updateCameraList();
+                    
+                    // إذا كان هناك كاميرا واحدة، نختارها تلقائياً
+                    if (availableCameras.length === 1) {
+                        cameraSelect.value = availableCameras[0].id;
+                    }
                 }).catch(err => {
                     console.error("خطأ في جلب الكاميرات:", err);
                     availableCameras = [];
                     updateCameraList();
-                });
-            }
-            
-            // تحديث قائمة الكاميرات
-            function updateCameraList() {
-                cameraSelect.innerHTML = '<option value="">اختر الكاميرا...</option>';
-                
-                if (availableCameras.length === 0) {
-                    cameraSelect.innerHTML += '<option value="" disabled>لم يتم العثور على كاميرات</option>';
-                    return;
-                }
-                
-                availableCameras.forEach(camera => {
-                    cameraSelect.innerHTML += `<option value="${camera.id}">${camera.label || `كاميرا ${camera.id}`}</option>`;
-                });
-            }
-            
-            // بدء المسح
-            startScannerButton.addEventListener('click', function() {
-                const cameraId = cameraSelect.value;
-                
-                if (!cameraId) {
-                    alert('الرجاء اختيار كاميرا أولاً');
-                    return;
-                }
-                
-                // تكوين الماسح الضوئي
-                const config = {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    supportedScanTypes: [
-                        Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-                        Html5QrcodeScanType.SCAN_TYPE_FILE
-                    ],
-                    formatsToSupport: [
-                        Html5QrcodeSupportedFormats.UPC_A,
-                        Html5QrcodeSupportedFormats.UPC_E,
-                        Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-                        Html5QrcodeSupportedFormats.EAN_8,
-                        Html5QrcodeSupportedFormats.EAN_13,
-                        Html5QrcodeSupportedFormats.CODE_39,
-                        Html5QrcodeSupportedFormats.CODE_93,
-                        Html5QrcodeSupportedFormats.CODE_128,
-                        Html5QrcodeSupportedFormats.ITF,
-                        Html5QrcodeSupportedFormats.QR_CODE
-                    ]
-                };
-                
-                // بدء المسح
-                html5QrCode.start(
-                    cameraId,
-                    config,
-                    onScanSuccess,
-                    onScanError
-                ).then(() => {
-                    startScannerButton.disabled = true;
-                    stopScan
+                    
+                    // عرض رسالة خطأ في واجهة المستخدم
+                    scannerElement.innerHTML = `
+                        <div class="scanner-overlay">
+                            <div style="color: white; text-align: center; padding: 20px;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 15px;"></i>
+                                <h3>لا يمكن الوصول إلى الكاميرا</h3>
+                   
