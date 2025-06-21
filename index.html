@@ -3,495 +3,590 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام إدارة المنتجات بالباركود</title>
+  <title>تسجيل المنتجات</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #3498db;
-      --secondary-color: #2980b9;
-      --success-color: #2ecc71;
-      --danger-color: #e74c3c;
-      --light-color: #ecf0f1;
-      --dark-color: #2c3e50;
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --danger: #f72585;
+      --success: #4cc9f0;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
     }
-
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      font-family: 'Tajawal', sans-serif;
-      text-align: center;
-      padding: 20px;
-      background: #f4f4f4;
-      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
     }
-
+    
     .container {
+      width: 100%;
       max-width: 1200px;
       margin: 0 auto;
+      padding: 20px;
     }
-
+    
     header {
-      background-color: var(--primary-color);
+      background-color: var(--primary);
       color: white;
-      padding: 15px 0;
-      border-radius: 0 0 15px 15px;
+      padding: 20px 0;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       margin-bottom: 30px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-
+    
     h1, h2, h3 {
-      color: var(--dark-color);
+      margin-bottom: 15px;
     }
-
+    
+    .section {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    }
+    
     #reader {
       width: 100%;
-      max-width: 400px;
-      margin: 20px auto;
-      position: relative;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .scanner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    .scanner-frame {
-      width: 80%;
-      height: 60%;
-      border: 4px solid rgba(255, 255, 255, 0.5);
-      border-radius: 15px;
-      position: relative;
-      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.6);
-    }
-
-    .scanner-frame::before, .scanner-frame::after {
-      content: '';
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border-color: var(--primary-color);
-      border-style: solid;
-      border-width: 0;
-    }
-
-    .scanner-frame::before {
-      top: 0;
-      left: 0;
-      border-left-width: 4px;
-      border-top-width: 4px;
-      border-top-left-radius: 10px;
-    }
-
-    .scanner-frame::after {
-      top: 0;
-      right: 0;
-      border-right-width: 4px;
-      border-top-width: 4px;
-      border-top-right-radius: 10px;
-    }
-
-    .scanner-frame-corner-bottom::before, 
-    .scanner-frame-corner-bottom::after {
-      content: '';
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border-color: var(--primary-color);
-      border-style: solid;
-      border-width: 0;
-      bottom: 0;
-    }
-
-    .scanner-frame-corner-bottom::before {
-      left: 0;
-      border-left-width: 4px;
-      border-bottom-width: 4px;
-      border-bottom-left-radius: 10px;
-    }
-
-    .scanner-frame-corner-bottom::after {
-      right: 0;
-      border-right-width: 4px;
-      border-bottom-width: 4px;
-      border-bottom-right-radius: 10px;
-    }
-
-    .scanner-guide {
-      color: white;
-      text-align: center;
-      margin-top: 20px;
-      font-size: 16px;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px 15px;
-      border-radius: 8px;
-    }
-
-    #registerForm, #productInfo {
-      margin: 30px auto;
       max-width: 500px;
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    input[type="text"], 
-    input[type="number"],
-    input[type="file"] {
-      padding: 12px 15px;
-      margin: 10px 0;
-      width: 100%;
-      border: 1px solid #ddd;
+      margin: 0 auto 20px;
       border-radius: 8px;
-      font-size: 16px;
-      transition: all 0.3s;
+      overflow: hidden;
     }
-
-    input:focus {
-      border-color: var(--primary-color);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-    }
-
-    button {
-      padding: 12px 25px;
+    
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: var(--primary);
+      color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 16px;
+      border-radius: 5px;
       cursor: pointer;
-      transition: all 0.3s;
-      margin: 10px 5px;
-      font-weight: 500;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      margin: 5px;
     }
-
-    .btn-primary {
-      background-color: var(--primary-color);
-      color: white;
+    
+    .btn:hover {
+      background-color: var(--secondary);
+      transform: translateY(-2px);
     }
-
-    .btn-primary:hover {
-      background-color: var(--secondary-color);
-    }
-
-    .btn-secondary {
-      background-color: #95a5a6;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background-color: #7f8c8d;
-    }
-
+    
     .btn-danger {
-      background-color: var(--danger-color);
-      color: white;
+      background-color: var(--danger);
     }
-
+    
     .btn-danger:hover {
-      background-color: #c0392b;
+      background-color: #d1145a;
     }
-
-    .card {
-      background: white;
+    
+    .btn-secondary {
+      background-color: var(--gray);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+      text-align: right;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    
+    .product-card {
+      background-color: white;
+      border-radius: 10px;
       padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      margin: 20px auto;
-      max-width: 400px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05);
       text-align: center;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
     }
-
-    .card img {
+    
+    .product-card img {
       width: 150px;
       height: 150px;
       object-fit: cover;
       border-radius: 10px;
       margin-bottom: 15px;
-      border: 3px solid var(--light-color);
+      border: 1px solid #eee;
     }
-
-    .product-list {
+    
+    .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 25px;
-      margin: 30px 0;
-      padding: 0 15px;
+      gap: 20px;
+      margin-top: 20px;
     }
-
+    
     .product-item {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
+      background-color: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
       text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      transition: transform 0.3s;
     }
-
+    
     .product-item:hover {
       transform: translateY(-5px);
     }
-
+    
     .product-item img {
-      width: 120px;
-      height: 120px;
-      border-radius: 10px;
+      width: 100px;
+      height: 100px;
       object-fit: cover;
-      margin-bottom: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #eee;
     }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: #7f8c8d;
-      grid-column: 1 / -1;
+    
+    .hidden {
+      display: none !important;
     }
-
-    .empty-state i {
-      font-size: 50px;
-      margin-bottom: 15px;
-      color: #bdc3c7;
-    }
-
-    .actions {
+    
+    .camera-options {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       gap: 10px;
-      margin-top: 20px;
-      flex-wrap: wrap;
+      margin-bottom: 15px;
     }
-
+    
+    .camera-preview {
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    #capturedImage {
+      max-width: 100%;
+      border-radius: 8px;
+      display: none;
+    }
+    
     @media (max-width: 768px) {
-      .product-list {
-        grid-template-columns: 1fr;
+      .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       }
       
-      #registerForm, #productInfo {
-        width: 90%;
-        padding: 15px;
+      .product-card img {
+        width: 120px;
+        height: 120px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .product-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-
   <header>
     <div class="container">
-      <h1><i class="fas fa-barcode"></i> نظام إدارة المنتجات بالباركود</h1>
-      <p>مسح وإدارة المنتجات بسهولة باستخدام الباركود</p>
+      <h1>📦 نظام إدارة المنتجات</h1>
+      <p>مسح الباركود وتسجيل المنتجات بسهولة</p>
     </div>
   </header>
 
   <div class="container">
-    <h2><i class="fas fa-qrcode"></i> مسح باركود المنتج</h2>
-    <div id="reader">
-      <div class="scanner-overlay">
-        <div class="scanner-frame">
-          <div class="scanner-frame-corner-bottom"></div>
+    <section class="section" id="scannerSection">
+      <h2>مسح باركود المنتج</h2>
+      <div id="reader"></div>
+      <p class="text-muted">أو</p>
+      <button id="manualEntryBtn" class="btn btn-secondary">إدخال الباركود يدوياً</button>
+    </section>
+
+    <section class="section hidden" id="manualEntrySection">
+      <h2>إدخال الباركود يدوياً</h2>
+      <div class="form-group">
+        <label for="manualBarcode">رقم الباركود</label>
+        <input type="text" id="manualBarcode" class="form-control" placeholder="أدخل رقم الباركود">
+      </div>
+      <button id="confirmManualBtn" class="btn">تأكيد</button>
+      <button id="cancelManualBtn" class="btn btn-secondary">إلغاء</button>
+    </section>
+
+    <section class="section hidden" id="registerSection">
+      <h2>تسجيل منتج جديد</h2>
+      <div class="product-card">
+        <div id="imagePreviewContainer">
+          <img id="capturedImage" alt="صورة المنتج">
+          <div class="camera-options">
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+            <button id="captureBtn" class="btn">📷 التقاط صورة</button>
+            <button id="uploadBtn" class="btn btn-secondary">📁 رفع صورة</button>
+          </div>
+          <div id="cameraPreview" class="camera-preview hidden"></div>
         </div>
-        <div class="scanner-guide">
-          <i class="fas fa-camera"></i> قم بتوجيه الكاميرا نحو الباركود
+        <div class="form-group">
+          <label for="productName">اسم المنتج</label>
+          <input type="text" id="productName" class="form-control" placeholder="أدخل اسم المنتج">
         </div>
+        <div class="form-group">
+          <label for="productPrice">سعر المنتج</label>
+          <input type="number" id="productPrice" class="form-control" placeholder="أدخل السعر">
+        </div>
+        <button id="saveProductBtn" class="btn">💾 حفظ المنتج</button>
+        <button id="cancelRegisterBtn" class="btn btn-secondary">إلغاء</button>
       </div>
-    </div>
+    </section>
 
-    <div id="registerForm" style="display:none;">
-      <h3><i class="fas fa-plus-circle"></i> تسجيل منتج جديد</h3>
-      <input type="text" id="productName" placeholder="اسم المنتج" required>
-      <input type="number" id="productPrice" placeholder="سعر المنتج" required>
-      <input type="file" accept="image/*" id="productImage" required>
-      <div class="actions">
-        <button class="btn-primary" onclick="saveProduct()">
-          <i class="fas fa-save"></i> حفظ المنتج
-        </button>
-        <button class="btn-secondary" onclick="resetScanner()">
-          <i class="fas fa-times"></i> إلغاء
-        </button>
-      </div>
-    </div>
+    <section class="section hidden" id="productInfoSection">
+      <h2>معلومات المنتج</h2>
+      <div class="product-card" id="productCard"></div>
+      <button id="backToScannerBtn" class="btn">🔁 العودة للمسح</button>
+    </section>
 
-    <div id="productInfo" style="display:none;">
-      <div class="card" id="productCard"></div>
-      <div class="actions">
-        <button class="btn-primary" onclick="resetScanner()">
-          <i class="fas fa-arrow-left"></i> العودة للمسح
-        </button>
-        <button class="btn-danger" onclick="deleteCurrentProduct()">
-          <i class="fas fa-trash"></i> حذف المنتج
-        </button>
-      </div>
-    </div>
-
-    <h3><i class="fas fa-boxes"></i> جميع المنتجات المسجلة</h3>
-    <div id="allProducts" class="product-list"></div>
+    <section class="section">
+      <h2>المنتجات المسجلة</h2>
+      <div id="allProducts" class="product-grid"></div>
+      <p id="noProductsMsg" class="text-muted" style="text-align: center; margin-top: 20px;">لا توجد منتجات مسجلة بعد</p>
+    </section>
   </div>
 
   <script>
     let currentBarcode = null;
     let html5QrcodeScanner = null;
+    let capturedImageData = null;
+    let cameraStream = null;
+
+    // تهيئة الماسح الضوئي عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      initScanner();
+      setupEventListeners();
+      showAllProducts();
+    });
+
+    function initScanner() {
+      html5QrcodeScanner = new Html5QrcodeScanner("reader", {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.UPC_A]
+      });
+      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function setupEventListeners() {
+      // أزرار الإدخال اليدوي
+      document.getElementById('manualEntryBtn').addEventListener('click', showManualEntry);
+      document.getElementById('confirmManualBtn').addEventListener('click', confirmManualEntry);
+      document.getElementById('cancelManualBtn').addEventListener('click', cancelManualEntry);
+      
+      // أزرار تسجيل المنتج
+      document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
+      document.getElementById('cancelRegisterBtn').addEventListener('click', resetScanner);
+      
+      // زر العودة للماسح
+      document.getElementById('backToScannerBtn').addEventListener('click', resetScanner);
+      
+      // أزرار الكاميرا
+      document.getElementById('captureBtn').addEventListener('click', startCamera);
+      document.getElementById('uploadBtn').addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+      });
+      
+      // معالج رفع الصورة
+      document.getElementById('fileInput').addEventListener('change', handleImageUpload);
+    }
 
     function onScanSuccess(decodedText) {
       currentBarcode = decodedText;
-      const saved = localStorage.getItem(decodedText);
+      handleBarcodeScanned(decodedText);
+    }
 
-      html5QrcodeScanner.pause();
+    function onScanFailure(error) {
+      console.warn(`خطأ في المسح: ${error}`);
+    }
 
-      if (saved) {
-        showProductInfo(JSON.parse(saved));
-      } else {
-        document.getElementById('registerForm').style.display = 'block';
-        document.getElementById('productInfo').style.display = 'none';
+    function showManualEntry() {
+      document.getElementById('scannerSection').classList.add('hidden');
+      document.getElementById('manualEntrySection').classList.remove('hidden');
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
       }
     }
 
-    function showProductInfo(data) {
-      document.getElementById('registerForm').style.display = 'none';
-      document.getElementById('productInfo').style.display = 'block';
+    function confirmManualEntry() {
+      const barcode = document.getElementById('manualBarcode').value.trim();
+      if (!barcode) {
+        alert("يرجى إدخال رقم الباركود");
+        return;
+      }
+      currentBarcode = barcode;
+      handleBarcodeScanned(barcode);
+    }
+
+    function cancelManualEntry() {
+      document.getElementById('manualBarcode').value = '';
+      document.getElementById('manualEntrySection').classList.add('hidden');
+      document.getElementById('scannerSection').classList.remove('hidden');
+      initScanner();
+    }
+
+    function handleBarcodeScanned(barcode) {
+      const savedProduct = localStorage.getItem(barcode);
+
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+      }
+
+      if (savedProduct) {
+        showProductInfo(JSON.parse(savedProduct));
+      } else {
+        showRegisterForm();
+      }
+    }
+
+    function showRegisterForm() {
+      document.getElementById('scannerSection').classList.add('hidden');
+      document.getElementById('manualEntrySection').classList.add('hidden');
+      document.getElementById('productInfoSection').classList.add('hidden');
+      document.getElementById('registerSection').classList.remove('hidden');
+      
+      // إعادة تعيين حقول النموذج
+      document.getElementById('productName').value = '';
+      document.getElementById('productPrice').value = '';
+      document.getElementById('capturedImage').style.display = 'none';
+      document.getElementById('capturedImage').src = '';
+      capturedImageData = null;
+      
+      // إيقاف الكاميرا إذا كانت تعمل
+      stopCamera();
+    }
+
+    function showProductInfo(productData) {
+      document.getElementById('scannerSection').classList.add('hidden');
+      document.getElementById('manualEntrySection').classList.add('hidden');
+      document.getElementById('registerSection').classList.add('hidden');
+      document.getElementById('productInfoSection').classList.remove('hidden');
 
       document.getElementById('productCard').innerHTML = `
-        <img src="${data.image}" alt="صورة المنتج">
-        <h3>${data.name}</h3>
-        <p><strong>السعر:</strong> ${data.price} د.م</p>
-        <p><strong>الباركود:</strong> ${data.barcode}</p>
+        <img src="${productData.image}" alt="صورة المنتج">
+        <h3>${productData.name}</h3>
+        <p><strong>السعر:</strong> ${productData.price} درهم</p>
+        <p><strong>الباركود:</strong> ${productData.barcode}</p>
       `;
     }
 
-    function saveProduct() {
-      const name = document.getElementById('productName').value;
-      const price = document.getElementById('productPrice').value;
-      const imageInput = document.getElementById('productImage');
-      const file = imageInput.files[0];
-
-      if (!name || !price || !file) {
-        alert("يرجى إدخال جميع البيانات المطلوبة");
-        return;
+    async function startCamera() {
+      try {
+        stopCamera(); // تأكد من إيقاف أي كاميرا تعمل بالفعل
+        
+        const preview = document.getElementById('cameraPreview');
+        preview.classList.remove('hidden');
+        document.getElementById('capturedImage').style.display = 'none';
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false 
+        });
+        
+        preview.innerHTML = '';
+        const video = document.createElement('video');
+        video.srcObject = cameraStream;
+        video.autoplay = true;
+        video.playsInline = true;
+        preview.appendChild(video);
+        
+        // إضافة زر التقاط الصورة
+        const captureBtn = document.createElement('button');
+        captureBtn.className = 'btn';
+        captureBtn.textContent = '📸 التقاط';
+        captureBtn.style.marginTop = '10px';
+        captureBtn.onclick = () => captureImage(video);
+        preview.appendChild(captureBtn);
+        
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        alert("تعذر الوصول إلى الكاميرا. يرجى التأكد من السماح باستخدام الكاميرا.");
+        // العودة إلى خيار رفع الصورة
+        document.getElementById('uploadBtn').click();
       }
+    }
 
+    function captureImage(videoElement) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      
+      capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // عرض الصورة الملتقطة
+      const capturedImg = document.getElementById('capturedImage');
+      capturedImg.src = capturedImageData;
+      capturedImg.style.display = 'block';
+      
+      // إخفاء معاينة الكاميرا
+      document.getElementById('cameraPreview').classList.add('hidden');
+      document.getElementById('cameraPreview').innerHTML = '';
+      
+      // إيقاف تدفق الكاميرا
+      stopCamera();
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      document.getElementById('cameraPreview').classList.add('hidden');
+      document.getElementById('cameraPreview').innerHTML = '';
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = function(e) {
-        const imageBase64 = e.target.result;
-        const productData = {
-          name,
-          price,
-          image: imageBase64,
-          barcode: currentBarcode
-        };
-
-        localStorage.setItem(currentBarcode, JSON.stringify(productData));
-        showProductInfo(productData);
-        showAllProducts();
+        capturedImageData = e.target.result;
+        const capturedImg = document.getElementById('capturedImage');
+        capturedImg.src = capturedImageData;
+        capturedImg.style.display = 'block';
+        document.getElementById('cameraPreview').classList.add('hidden');
       };
-
       reader.readAsDataURL(file);
     }
 
-    function resetScanner() {
-      document.getElementById('productInfo').style.display = 'none';
-      document.getElementById('registerForm').style.display = 'none';
-      document.getElementById('productName').value = '';
-      document.getElementById('productPrice').value = '';
-      document.getElementById('productImage').value = '';
+    function saveProduct() {
+      const name = document.getElementById('productName').value.trim();
+      const price = document.getElementById('productPrice').value.trim();
       
-      if (html5QrcodeScanner && html5QrcodeScanner.isPaused) {
-        html5QrcodeScanner.resume();
+      if (!name) {
+        alert("يرجى إدخال اسم المنتج");
+        return;
       }
+      
+      if (!price || isNaN(price)) {
+        alert("يرجى إدخال سعر صحيح للمنتج");
+        return;
+      }
+      
+      if (!capturedImageData) {
+        alert("يرجى إضافة صورة للمنتج");
+        return;
+      }
+      
+      const productData = {
+        name,
+        price,
+        image: capturedImageData,
+        barcode: currentBarcode
+      };
+      
+      localStorage.setItem(currentBarcode, JSON.stringify(productData));
+      alert("تم حفظ المنتج بنجاح!");
+      resetScanner();
+      showAllProducts();
     }
 
-    function deleteCurrentProduct() {
-      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-        localStorage.removeItem(currentBarcode);
-        resetScanner();
-        showAllProducts();
+    function resetScanner() {
+      // إيقاف الكاميرا إذا كانت تعمل
+      stopCamera();
+      
+      // إعادة تعيين جميع الأقسام
+      document.getElementById('scannerSection').classList.remove('hidden');
+      document.getElementById('manualEntrySection').classList.add('hidden');
+      document.getElementById('registerSection').classList.add('hidden');
+      document.getElementById('productInfoSection').classList.add('hidden');
+      
+      // إعادة تهيئة الماسح الضوئي
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
       }
+      initScanner();
+    }
+
+    function showAllProducts() {
+      const allProductsDiv = document.getElementById('allProducts');
+      const noProductsMsg = document.getElementById('noProductsMsg');
+      allProductsDiv.innerHTML = '';
+      
+      let hasProducts = false;
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        try {
+          const productData = JSON.parse(localStorage.getItem(key));
+          if (productData && productData.name) {
+            hasProducts = true;
+            const productItem = document.createElement('div');
+            productItem.className = 'product-item';
+            productItem.innerHTML = `
+              <img src="${productData.image}" alt="${productData.name}">
+              <h4>${productData.name}</h4>
+              <p>${productData.price} درهم</p>
+              <p class="text-muted">${productData.barcode}</p>
+              <button class="btn btn-danger" onclick="deleteProduct('${key}')">🗑️ حذف</button>
+            `;
+            allProductsDiv.appendChild(productItem);
+          }
+        } catch(e) {
+          continue;
+        }
+      }
+      
+      noProductsMsg.style.display = hasProducts ? 'none' : 'block';
     }
 
     function deleteProduct(barcode) {
-      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+      if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج؟")) {
         localStorage.removeItem(barcode);
         showAllProducts();
-        
+        // إذا كان المنتج المحذوف هو المعروض حالياً، ارجع للماسح
         if (currentBarcode === barcode) {
           resetScanner();
         }
       }
     }
 
-    function showAllProducts() {
-      const allDiv = document.getElementById('allProducts');
-      allDiv.innerHTML = '';
-
-      let hasProducts = false;
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          if (!data || !data.name) continue;
-
-          hasProducts = true;
-          
-          const item = document.createElement('div');
-          item.className = 'product-item';
-          item.innerHTML = `
-            <img src="${data.image}" alt="${data.name}">
-            <h4>${data.name}</h4>
-            <p><strong>السعر:</strong> ${data.price} د.م</p>
-            <p><strong>الباركود:</strong> ${data.barcode}</p>
-            <button class="btn-danger" onclick="deleteProduct('${key}')">
-              <i class="fas fa-trash"></i> حذف
-            </button>
-          `;
-          allDiv.appendChild(item);
-        } catch(e) {
-          continue;
-        }
-      }
-
-      if (!hasProducts) {
-        allDiv.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-box-open"></i>
-            <h3>لا توجد منتجات مسجلة</h3>
-            <p>قم بمسح الباركود لإضافة منتج جديد</p>
-          </div>
-        `;
-      }
-    }
-
-    // بدء المسح عند تحميل الصفحة
-    document.addEventListener('DOMContentLoaded', function() {
-      html5QrcodeScanner = new Html5QrcodeScanner("reader", {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.CODE_93,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.QR_CODE
-        ]
-      });
-
-      html5QrcodeScanner.render(onScanSuccess);
-      showAllProducts();
-    });
+    // جعل الدوال متاحة عالمياً للاستدعاء من الأحداث في HTML
+    window.deleteProduct = deleteProduct;
   </script>
-
 </body>
 </html>
