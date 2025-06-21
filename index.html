@@ -1,17 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-  <title>مسح باركود أو QR</title>
+  <meta charset="UTF-8">
+  <title>مسح باركود أو QR Code</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 30px; }
-    #result { font-size: 20px; color: green; margin-top: 20px; }
-    #reader { width: 300px; margin: auto; }
+    body {
+      font-family: Arial;
+      background: #f0f0f0;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 320px;
+      margin: auto;
+      border: 2px solid #444;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: green;
+      font-weight: bold;
+      padding: 10px;
+      background: #e0ffe0;
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    .instructions {
+      margin-bottom: 15px;
+      color: #555;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>📷 مسح باركود أو QR Code</h2>
+  <h2>📷 مسح باركود أو QR</h2>
+  <p class="instructions">من فضلك وجه الكاميرا إلى الباركود أو QR Code</p>
+
   <div id="reader"></div>
   <div id="result">النتيجة ستظهر هنا...</div>
 
@@ -19,19 +55,25 @@
     const resultContainer = document.getElementById('result');
 
     function onScanSuccess(decodedText, decodedResult) {
-      // عرض البيانات
+      // عرض البيانات المقروءة
       resultContainer.innerText = "📦 البيانات: " + decodedText;
 
       // إيقاف المسح بعد القراءة
       html5QrcodeScanner.clear().then(() => {
-        console.log("تم إيقاف المسح.");
+        console.log("تم إيقاف الكاميرا بعد المسح.");
       }).catch(error => {
-        console.error("خطأ أثناء الإيقاف", error);
+        console.error("خطأ أثناء محاولة الإيقاف:", error);
       });
     }
 
     const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: 250 });
+      "reader", {
+        fps: 10,
+        qrbox: {
+          width: 250,
+          height: 250
+        }
+      });
 
     html5QrcodeScanner.render(onScanSuccess);
   </script>
