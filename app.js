@@ -35,10 +35,12 @@ async function init() {
     // Determine WebSocket protocol (ws or wss)
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     // Construct WebSocket URL (assuming server.js is running on the same host and port 8080)
-    // For local development, you might run the HTTP server on one port (e.g., 8000 or from a live server extension)
-    // and the WebSocket server on another (e.g., 8080).
-    // Adjust if your setup is different.
-    const wsUrl = `${wsProtocol}//${window.location.hostname}:8080`;
+    // Construct WebSocket URL. It will connect to the same host and port
+    // as the HTTP server that served the page.
+    let wsUrl = `${wsProtocol}//${window.location.hostname}`;
+    if (window.location.port) { // Add port only if it's specified
+        wsUrl += `:${window.location.port}`;
+    }
 
     console.log(`Attempting to connect to WebSocket server at ${wsUrl}`);
     ws = new WebSocket(wsUrl);
