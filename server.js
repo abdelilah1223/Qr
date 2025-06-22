@@ -1,14 +1,63 @@
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const PORT = process.env.PORT || 8080;
+
+// Create HTTP server
+const server = http.createServer((req, res) => {
+    let filePath = '.' + req.url;
+    if (filePath === './') {
+        filePath = './index.html';
+    }
+
+    const extname = String(path.extname(filePath)).toLowerCase();
+    const mimeTypes = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        // Add other MIME types if needed
+    };
+
+    const contentType = mimeTypes[extname] || 'application/octet-stream';
+
+    fs.readFile(filePath, (error, content) => {
+        if (error) {
+            if (error.code == 'ENOENT') {
+                fs.readFile('./404.html', (err, cont) => { // Optional: serve a 404.html page
+                    res.writeHead(404, { 'Content-Type': 'text/html' });
+                    if (err) { // If 404.html also not found
+                        res.end('404 Not Found (and no 404.html either!)', 'utf-8');
+                    } else {
+                        res.end(cont, 'utf-8');
+                    }
+                });
+            } else {
+                res.writeHead(500);
+                res.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
+            }
+        } else {
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(content, 'utf-8');
+        }
+    });
+});
+
+// Create WebSocket server and attach it to the HTTP server
+const wss = new WebSocket.Server({ server }); // Attach to the existing HTTP server
 
 // Store connected users: ws -> { id, peerId (current peer in call) }
 const users = new Map();
 // Store users waiting for a random call: id -> ws
 const randomQueue = new Map();
 
-console.log('Signaling server started on port 8080');
+// Start the HTTP server (which also hosts the WebSocket server)
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`WebSocket server is also attached and listening on port ${PORT}`);
+});
 
 wss.on('connection', (ws) => {
     const userId = uuidv4();
