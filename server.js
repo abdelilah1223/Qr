@@ -217,21 +217,6 @@ wss.on('connection', (ws) => {
 
             default:
                 console.log(`Unknown message type: ${data.type}`);
-                    // Tell the peer to expect an offer from the requester
-                    peerWs.send(JSON.stringify({ type: 'expect-offer-from', peerId: currentUserId }));
-
-                    console.log(`Pairing ${currentUserId} with random peer ${peerId}`);
-
-                } else {
-                    // Add user to the random queue
-                    randomQueue.set(currentUserId, ws);
-                    console.log(`User ${currentUserId} added to random queue. Queue size: ${randomQueue.size}`);
-                    ws.send(JSON.stringify({ type: 'no-random-peer', message: 'Waiting for another user to join for a random call.' }));
-                }
-                break;
-
-            default:
-                console.log(`Unknown message type: ${data.type}`);
                 ws.send(JSON.stringify({ type: 'error', message: `Unknown message type: ${data.type}` }));
         }
     });
