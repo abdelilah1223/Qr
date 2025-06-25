@@ -1,23 +1,14 @@
 {
-  "name": "webrtc-video-audio-call",
+  "name": "simple-video-chat",
   "version": "1.0.0",
-  "description": "A simple WebRTC video and audio calling website.",
+  "description": "A simple video chat application without login or database",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [
-    "webrtc",
-    "video",
-    "audio",
-    "call",
-    "real-time"
-  ],
-  "author": "AI Agent",
-  "license": "ISC",
   "dependencies": {
-    "uuid": "^9.0.0",
-    "ws": "^8.0.0"
+    "express": "^4.17.1",
+    "uuid": "^8.3.2",
+    "ws": "^7.4.6"
   }
 }
