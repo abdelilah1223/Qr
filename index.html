@@ -4,7 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فيديو شات بسيط</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: #2c3e50;
+}
+
+.user-id-container {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-id-container input {
+    padding: 8px;
+    width: 200px;
+    text-align: center;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#local-video, #remote-video {
+    width: 100%;
+    height: auto;
+}
+
+#local-video-small {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 120px;
+    height: 90px;
+    border: 2px solid #fff;
+    border-radius: 4px;
+}
+
+.actions {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+.connect-to {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.connect-to input {
+    padding: 8px;
+    width: 200px;
+}
+
+#status-message {
+    margin: 20px 0;
+    color: #e74c3c;
+    min-height: 24px;
+}
+
+#end-call {
+    background-color: #e74c3c;
+    margin-top: 20px;
+}
+
+#end-call:hover {
+    background-color: #c0392b;
+}
+    </style>
 </head>
 <body>
     <div class="container">
