@@ -12,6 +12,7 @@ const hangupBtn = document.getElementById('hangup-btn');
 let localStream;
 let peerConnection;
 let myId;
+let currentPeerId = null; // To store the ID of the current peer in call
 let ws; // WebSocket connection
 
 const STUN_SERVERS = {
@@ -61,8 +62,10 @@ async function init() {
                 myIdDisplay.textContent = myId;
                 break;
             case 'offer': // Incoming offer from a specific user or a matched random user
-                peerIdInput.value = data.from; // Set who the offer is from
-                await handleOffer(data.offer, data.from);
+                currentPeerId = data.from;
+                peerIdInput.value = data.from; // Keep input updated for display if needed, but use currentPeerId for logic
+                console.log(`Incoming call/offer from ${currentPeerId}`);
+                await handleOffer(data.offer, data.from); // fromId is still useful for handleOffer context
                 break;
             case 'answer':
                 await handleAnswer(data.answer);
@@ -70,8 +73,13 @@ async function init() {
             case 'candidate':
                 await handleCandidate(data.candidate);
                 break;
-            case 'user-left':
-                handleUserLeft();
+            case 'hangup': // Peer initiated hangup
+                console.log(`Received hangup signal from ${data.from}`);
+                alert(`Call with ${data.from || 'peer'} ended because they hung up.`);
+                resetCallState();
+                break;
+            case 'user-left': // Peer disconnected abruptly
+                handleUserLeft(); // This already calls resetCallState
                 break;
             case 'call-failed':
                 alert(data.message);
@@ -79,12 +87,14 @@ async function init() {
                 break;
             case 'make-offer-to': // Server instructed us to make an offer to data.peerId
                 console.log(`Server instructed to make offer to ${data.peerId}`);
-                peerIdInput.value = data.peerId; // Set target for the call
+                currentPeerId = data.peerId;
+                peerIdInput.value = data.peerId; // Set target for the call display
                 makeCall(data.peerId); // This will create PC, offer and send it
                 break;
             case 'expect-offer-from': // Server informed us to expect an offer from data.peerId
                 console.log(`Expecting offer from ${data.peerId}`);
-                peerIdInput.value = data.peerId; // Good to know who is calling
+                currentPeerId = data.peerId;
+                peerIdInput.value = data.peerId; // Good to know who is calling, update display
                 // UI can be updated here, e.g., "Connecting to a random user..."
                 // Actual offer will arrive as 'offer' type message
                 break;
@@ -124,7 +134,7 @@ function createPeerConnection() {
             sendMessage({
                 type: 'candidate',
                 candidate: event.candidate,
-                to: peerIdInput.value || (peerConnection.currentRemoteDescription ? peerConnection.currentRemoteDescription.spd : null) // Send to current peer
+                to: currentPeerId // Send to current peer
             });
         }
     };
@@ -145,53 +155,74 @@ function createPeerConnection() {
     peerIdInput.disabled = true;
 }
 
-async function makeCall(peerId) {
-    if (!peerId) {
+async function makeCall(peerIdToCall) {
+    if (!peerIdToCall) {
         alert('Please enter a Peer ID to call.');
         return;
     }
-    if (peerId === myId) {
+    if (peerIdToCall === myId) {
         alert("You can't call yourself.");
         return;
     }
+    currentPeerId = peerIdToCall; // Set currentPeerId when initiating a call
+    peerIdInput.value = peerIdToCall; // Also update the input field for display
 
-    createPeerConnection();
+    console.log(`Attempting to call ${currentPeerId}`);
+    createPeerConnection(); // This will set up tracks and ICE handlers
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
-    sendMessage({ type: 'offer', offer: offer, to: peerId });
-    console.log('Offer sent to:', peerId);
+    sendMessage({ type: 'offer', offer: offer, to: currentPeerId });
+    console.log('Offer sent to:', currentPeerId);
 }
 
 async function handleOffer(offer, fromId) {
+    // fromId is the peer who sent the offer. This becomes our currentPeerId.
+    // This was already set in the 'offer' case in ws.onmessage, but double-setting is fine.
+    currentPeerId = fromId;
+    peerIdInput.value = fromId; // Update display
+
     if (peerConnection) { // If already in a call or call attempt
-        console.warn('Existing peer connection. Ignoring new offer for now.');
+        console.warn(`Already have a peerConnection. Incoming call from ${fromId} ignored. Current peer: ${currentPeerId}`);
         // Optionally, send a "busy" signal back
-        // sendMessage({ type: 'busy', to: fromId });
+        sendMessage({ type: 'busy', to: fromId, from: myId }); // Let them know you're busy
         return;
     }
-    createPeerConnection();
-    peerIdInput.value = fromId; // So we know who we are talking to for candidates
+    console.log(`Handling offer from ${fromId}`);
+    createPeerConnection(); // Sets up PC for the receiver
 
     await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    console.log(`Remote description set for offer from ${fromId}`);
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
 
-    sendMessage({ type: 'answer', answer: answer, to: fromId });
-    console.log('Answer sent to:', fromId);
+    sendMessage({ type: 'answer', answer: answer, to: currentPeerId }); // Send answer to the determined currentPeerId
+    console.log('Answer sent to:', currentPeerId);
     answerBtn.style.display = 'none'; // Hide if it was shown
 }
 
-async function handleAnswer(answer) {
+async function handleAnswer(answer) { // Received from currentPeerId
+    if (!peerConnection) {
+        console.error("Received an answer but peerConnection is not initialized.");
+        return;
+    }
     if (!peerConnection.currentRemoteDescription) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log('Answer received and processed.');
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            console.log(`Answer from ${currentPeerId} processed and remote description set.`);
+        } catch (e) {
+            console.error(`Error setting remote description from answer: `, e);
+        }
     } else {
-        console.warn('Remote description already set. Ignoring answer.');
+        console.warn(`Remote description already set for ${currentPeerId}. Ignoring answer.`);
     }
 }
 
-async function handleCandidate(candidate) {
+async function handleCandidate(candidate) { // Received from currentPeerId
+    if (!peerConnection) {
+        console.error("Received a candidate but peerConnection is not initialized.");
+        return;
+    }
     try {
         if (candidate) {
             await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
@@ -204,21 +235,30 @@ async function handleCandidate(candidate) {
 
 function sendMessage(message) {
     if (ws && ws.readyState === WebSocket.OPEN) {
-        // If 'to' is not set, the server will handle it (e.g., for candidates during an active call)
-        // or it's a message directly for the server (like 'request-random-peer')
-        if (!message.to && peerConnection && peerConnection.currentRemoteDescription) {
-             // Try to infer 'to' if it's a candidate and peerIdInput might have been cleared
-             // This part is tricky if peerIdInput.value is not reliable source of truth for current peer
+        // Ensure 'to' field is set for peer-specific messages if currentPeerId is known
+        if (!message.to && (message.type === 'offer' || message.type === 'answer' || message.type === 'candidate' || message.type === 'hangup')) {
+            if (currentPeerId) {
+                message.to = currentPeerId;
+            } else {
+                console.error(`Cannot send message of type ${message.type} without a 'to' field and no currentPeerId.`);
+                return; // Don't send if critical 'to' info is missing
+            }
         }
+        console.log("Sending message: ", message);
         ws.send(JSON.stringify(message));
     } else {
-        console.error('WebSocket is not connected.');
+        console.error('WebSocket is not connected. Cannot send message:', message);
         alert('Not connected to the signaling server. Cannot send message.');
     }
 }
 
 function hangUp() {
-    sendMessage({ type: 'hangup', to: peerIdInput.value });
+    if (currentPeerId) {
+        sendMessage({ type: 'hangup', to: currentPeerId });
+        console.log(`Sent hangup to ${currentPeerId}`);
+    } else {
+        console.log("Hangup called but no currentPeerId to send hangup to. Resetting locally.");
+    }
     closeConnection();
     resetCallState();
 }
@@ -238,7 +278,9 @@ function resetCallState() {
     callBtn.disabled = false;
     randomCallBtn.disabled = false;
     peerIdInput.disabled = false;
-    peerIdInput.value = ''; // Clear peer ID input
+    peerIdInput.value = '';
+    currentPeerId = null; // Reset currentPeerId
+    console.log("Call state reset. currentPeerId is now null.");
     // localVideo.srcObject = null; // Keep local video running for next call
     // if (localStream) {
     //     localStream.getTracks().forEach(track => track.stop());

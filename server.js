@@ -99,6 +99,18 @@ wss.on('connection', (ws) => {
                     if (data.type === 'offer') {
                         const targetUserDetails = users.get(targetUserWs);
                         if (targetUserDetails) {
+                            // Check if target user is already in a call
+                            if (targetUserDetails.peerId) {
+                                ws.send(JSON.stringify({ type: 'call-failed', message: `User ${data.to} is already in a call.` }));
+                                console.log(`Call attempt from ${currentUserId} to ${data.to} failed: target is busy.`);
+                                return; // Stop further processing for this offer
+                            }
+                            // Check if current user is already in a call
+                            if (currentUser.peerId) {
+                                ws.send(JSON.stringify({ type: 'call-failed', message: `You are already in a call. Please hang up first.` }));
+                                console.log(`Call attempt from ${currentUserId} to ${data.to} failed: caller is busy.`);
+                                return;
+                            }
                             currentUser.peerId = data.to;
                             targetUserDetails.peerId = currentUserId;
                             users.set(ws, currentUser);
@@ -106,10 +118,17 @@ wss.on('connection', (ws) => {
                             console.log(`Call initiated between ${currentUserId} and ${data.to}`);
                         }
                     }
-                     // If it's a hangup, clear peerIds
+                    // If it's a hangup, clear peerIds
+                    // The actual sending of 'hangup-received' to targetUserWs will be part of this block too.
                     if (data.type === 'hangup') {
+                        console.log(`Hangup initiated by ${currentUserId} towards ${data.to} (targetUserWs: ${users.get(targetUserWs)?.id})`);
+                        // Forward the hangup message to the target user first
+                        // So they know the call is ending from the other side.
+                        // Then clear peer info.
+                        // (This forwarding is already handled by the generic forward below,
+                        // but explicit handling for 'hangup-received' will be added in app.js)
                         clearPeerInfo(ws, targetUserWs);
-                        console.log(`Call ended between ${currentUserId} and ${data.to} by ${currentUserId}`);
+                        console.log(`Call ended between ${currentUserId} and ${data.to} by ${currentUserId}. Peer info cleared.`);
                     }
                     targetUserWs.send(JSON.stringify(messageToSend));
                 } else {
@@ -122,34 +141,82 @@ wss.on('connection', (ws) => {
 
             case 'request-random-peer':
                 console.log(`User ${currentUserId} requests a random peer.`);
+
+                if (currentUser.peerId) {
+                    ws.send(JSON.stringify({ type: 'error', message: 'You are already in a call or being connected. Please hang up first.' }));
+                    console.log(`User ${currentUserId} tried to request random peer while already in call with ${currentUser.peerId}`);
+                    return;
+                }
+
+                // Remove user from queue if they were already in it, to prevent self-pairing or re-pairing
+                if (randomQueue.has(currentUserId)) {
+                    console.log(`User ${currentUserId} was already in random queue, removing before attempting to find new peer.`);
+                    randomQueue.delete(currentUserId);
+                }
+
                 // Check if there's anyone else in the queue
                 if (randomQueue.size > 0) {
-                    const [peerId, peerWs] = randomQueue.entries().next().value; // Get the first waiting user
+                    let peerId, peerWs;
+                    // Iterate to find a suitable peer (not self)
+                    for (const [pId, pWs] of randomQueue.entries()) {
+                        if (pId !== currentUserId) { // Ensure not trying to pair with self if re-queued
+                            peerId = pId;
+                            peerWs = pWs;
+                            break;
+                        }
+                    }
 
-                    if (peerId === currentUserId) { // Shouldn't happen if logic is correct
-                        console.log("Random peer is self, re-queuing.");
-                        // If somehow it's the same user, put them back if not already there, or just wait for next
-                        if (!randomQueue.has(currentUserId)) randomQueue.set(currentUserId, ws);
+                    if (!peerWs) { // No suitable peer found (e.g., only self was in queue)
+                        console.log(`No suitable random peer for ${currentUserId}. Adding to queue.`);
+                        randomQueue.set(currentUserId, ws);
+                        ws.send(JSON.stringify({ type: 'no-random-peer', message: 'Waiting for another user to join for a random call.' }));
                         return;
                     }
 
-                    randomQueue.delete(peerId); // Remove peer from queue
 
-                    // Initiate call by sending peer's stored offer (if we were to store it)
-                    // Or, more simply, tell one to make an offer to the other.
-                    // Let the current requester make an offer to the found peer.
+                    randomQueue.delete(peerId); // Remove found peer from queue
+                    console.log(`Found random peer ${peerId} for ${currentUserId}. Removing ${peerId} from queue.`);
 
                     // Update peerIds for both
                     const peerUserDetails = users.get(peerWs);
-                    if (peerUserDetails) {
+                    if (peerUserDetails && !peerUserDetails.peerId && !currentUser.peerId) { // Double check both are free
                         currentUser.peerId = peerId;
                         peerUserDetails.peerId = currentUserId;
                         users.set(ws, currentUser);
                         users.set(peerWs, peerUserDetails);
+
+                        // Tell the requester to make an offer to the peer
+                        ws.send(JSON.stringify({ type: 'make-offer-to', peerId: peerId }));
+                        // Tell the peer to expect an offer from the requester
+                        peerWs.send(JSON.stringify({ type: 'expect-offer-from', peerId: currentUserId }));
+                        console.log(`Pairing ${currentUserId} with random peer ${peerId}`);
+                    } else {
+                        // One of them got into a call in the meantime, or something went wrong.
+                        // Put the peerWs back in queue if they are still free.
+                        // The current user (ws) will have to try again.
+                        console.error(`Failed to pair ${currentUserId} with ${peerId}. One or both may no longer be available or an error occurred.`);
+                        if (peerUserDetails && !peerUserDetails.peerId && peerWs) {
+                             // Only add back if they are still connected and not in a call
+                            if (users.has(peerWs) && !users.get(peerWs).peerId) {
+                                randomQueue.set(peerId, peerWs);
+                                console.log(`Put user ${peerId} back into random queue.`);
+                            }
+                        }
+                        // Inform current user to try again
+                        ws.send(JSON.stringify({ type: 'no-random-peer', message: 'Could not connect to random user, please try again.' }));
+                        // Current user is not added back to queue here, they need to click again.
                     }
 
-                    // Tell the requester to make an offer to the peer
-                    ws.send(JSON.stringify({ type: 'make-offer-to', peerId: peerId }));
+                } else {
+                    // Add user to the random queue
+                    console.log(`Random queue is empty. Adding user ${currentUserId} to random queue. Queue size: ${randomQueue.size + 1}`);
+                    randomQueue.set(currentUserId, ws);
+                    ws.send(JSON.stringify({ type: 'no-random-peer', message: 'Waiting for another user to join for a random call.' }));
+                }
+                break;
+
+            default:
+                console.log(`Unknown message type: ${data.type}`);
                     // Tell the peer to expect an offer from the requester
                     peerWs.send(JSON.stringify({ type: 'expect-offer-from', peerId: currentUserId }));
 
@@ -172,17 +239,34 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         const closedUser = users.get(ws);
         if (closedUser) {
-            console.log(`User ${closedUser.id} disconnected.`);
-            const peerWs = findUserById(closedUser.peerId);
+            console.log(`User ${closedUser.id} disconnected. Current peerId: ${closedUser.peerId}`);
+            const peerId = closedUser.peerId; // Store before potentially modifying closedUser
+            const peerWs = findUserById(peerId);
+
             if (peerWs) {
-                peerWs.send(JSON.stringify({ type: 'user-left', from: closedUser.id }));
-                clearPeerInfo(ws, peerWs);
+                console.log(`User ${closedUser.id} was in a call with ${peerId}. Notifying peer.`);
+                peerWs.send(JSON.stringify({ type: 'user-left', from: closedUser.id, details: 'Your peer has disconnected.' }));
+                // Clear peer info for both the disconnected user (ws) and their peer (peerWs)
+                clearPeerInfo(ws, peerWs); // This will nullify peerId for both from server's perspective
+                console.log(`Notified user ${users.get(peerWs)?.id || peerId} that ${closedUser.id} has left and cleared peer info for both.`);
+            } else if (peerId) {
+                // PeerId was set, but peerWs not found (e.g., peer disconnected very recently or simultaneously)
+                // We still need to ensure the closedUser's state is cleaned up regarding this peerId.
+                // clearPeerInfo(ws, null) will handle clearing peerId for closedUser.
+                console.log(`Peer ${peerId} for user ${closedUser.id} was not found (already disconnected or non-existent). Clearing peerId for ${closedUser.id}.`);
+                clearPeerInfo(ws, null); // Clears peerId for closedUser
             }
+            // Else, user was not in a call, no peer to notify or clear.
+
             users.delete(ws);
+            console.log(`User ${closedUser.id} removed from users map. Users online: ${users.size}`);
             if (randomQueue.has(closedUser.id)) {
                 randomQueue.delete(closedUser.id);
-                console.log(`User ${closedUser.id} removed from random queue.`);
+                console.log(`User ${closedUser.id} removed from random queue. Queue size: ${randomQueue.size}`);
             }
+        } else {
+            // This case should ideally not happen if ws was in users map.
+            console.log('A WebSocket connection closed, but the user was not found in the users map.');
         }
     });
 
@@ -206,19 +290,34 @@ function findUserById(userId) {
 function clearPeerInfo(ws1, ws2) {
     const user1Details = users.get(ws1);
     if (user1Details) {
-        user1Details.peerId = null;
-        users.set(ws1, user1Details);
+        if (user1Details.peerId) {
+            console.log(`Clearing peerId for user ${user1Details.id} (was ${user1Details.peerId})`);
+            user1Details.peerId = null;
+            users.set(ws1, user1Details);
+        } else {
+            console.log(`User ${user1Details.id} did not have a peerId to clear.`);
+        }
+    } else {
+        console.log("clearPeerInfo: ws1 not found in users map.");
     }
+
     if (ws2) { // ws2 might be null if peer was not found or already disconnected
         const user2Details = users.get(ws2);
         if (user2Details) {
-            user2Details.peerId = null;
-            users.set(ws2, user2Details);
+            if (user2Details.peerId) {
+                console.log(`Clearing peerId for user ${user2Details.id} (was ${user2Details.peerId})`);
+                user2Details.peerId = null;
+                users.set(ws2, user2Details);
+            } else {
+                console.log(`User ${user2Details.id} did not have a peerId to clear.`);
+            }
+        } else {
+            console.log("clearPeerInfo: ws2 not found in users map (this might be expected if peer already disconnected).");
         }
     }
 }
 
-// Periodically log queue size for debugging
+// Periodically log queue size and user states for debugging
 setInterval(() => {
     if (randomQueue.size > 0) {
         console.log(`Current random queue size: ${randomQueue.size}. Users: ${Array.from(randomQueue.keys())}`);
