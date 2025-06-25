@@ -172,8 +172,8 @@ async function setupLocalStream() {
 }
 
 function setupWebSocket() {
-    socket = new WebSocket(`ws://${window.location.hostname}:${window.location.port}`);
-    
+    socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         
