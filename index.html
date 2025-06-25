@@ -1,42 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video & Audio Call</title>
+    <title>فيديو شات بسيط</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Video & Audio Call</h1>
-
-        <div class="user-ids">
-            <p>Your ID: <span id="my-id"></span></p>
-        </div>
-
-        <div class="call-controls">
-            <input type="text" id="peer-id-input" placeholder="Enter Peer ID to call">
-            <button id="call-btn">Call</button>
-            <button id="random-call-btn">Random Call</button>
-        </div>
-
-        <div class="videos">
-            <div class="video-container">
-                <h2>Local Video</h2>
-                <video id="local-video" autoplay muted playsinline></video>
+        <div id="intro-screen">
+            <h1>فيديو شات بسيط</h1>
+            <div class="user-id-container">
+                <p>معرفك:</p>
+                <input type="text" id="user-id" readonly>
+                <button onclick="copyUserId()">نسخ المعرف</button>
             </div>
+            
             <div class="video-container">
-                <h2>Remote Video</h2>
-                <video id="remote-video" autoplay playsinline></video>
+                <video id="local-video" autoplay muted></video>
             </div>
+            
+            <div class="actions">
+                <button id="random-connect" onclick="connectRandom()">اتصال عشوائي</button>
+                
+                <div class="connect-to">
+                    <input type="text" id="target-id" placeholder="أدخل ID المستخدم">
+                    <button onclick="connectToUser()">اتصال</button>
+                </div>
+            </div>
+            
+            <div id="status-message"></div>
         </div>
-
-        <div class="call-actions">
-            <button id="answer-btn" style="display: none;">Answer Call</button>
-            <button id="hangup-btn" style="display: none;">Hang Up</button>
+        
+        <div id="call-screen" style="display: none;">
+            <div class="video-container">
+                <video id="remote-video" autoplay></video>
+                <video id="local-video-small" autoplay muted></video>
+            </div>
+            
+            <button id="end-call" onclick="endCall()">إنهاء المكالمة</button>
         </div>
     </div>
-
-    <script src="app.js"></script>
+    
+    <script src="script.js"></script>
 </body>
 </html>
