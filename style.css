@@ -1,192 +1,104 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
-    color: #333;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
     margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align to top to see content if it overflows */
-    min-height: 100vh;
-    box-sizing: border-box;
+    padding: 0;
+    color: #333;
 }
 
 .container {
-    background-color: #ffffff;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 900px; /* Increased max-width for better layout */
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
     text-align: center;
 }
 
 h1 {
-    color: #007bff;
-    margin-bottom: 20px;
+    color: #2c3e50;
 }
 
-h2 {
-    color: #555;
-    font-size: 1.1em;
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.user-ids {
-    margin-bottom: 20px;
-    padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 5px;
-    font-size: 0.95em;
-}
-
-#my-id {
-    font-weight: bold;
-    color: #28a745;
-}
-
-.call-controls {
-    margin-bottom: 25px;
+.user-id-container {
+    margin: 20px 0;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
-.call-controls input[type="text"] {
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    font-size: 0.9em;
-    flex-grow: 1; /* Allow input to take available space */
-    min-width: 150px; /* Minimum width for the input */
-}
-
-button {
-    padding: 10px 18px;
-    font-size: 0.95em;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-#call-btn {
-    background-color: #28a745; /* Green */
-}
-#call-btn:hover {
-    background-color: #1e7e34;
-}
-
-#random-call-btn {
-    background-color: #ffc107; /* Yellow */
-    color: #212529;
-}
-#random-call-btn:hover {
-    background-color: #e0a800;
-}
-
-#hangup-btn {
-    background-color: #dc3545; /* Red */
-}
-#hangup-btn:hover {
-    background-color: #c82333;
-}
-
-#answer-btn { /* Style for answer button if used explicitly */
-    background-color: #17a2b8; /* Teal */
-}
-#answer-btn:hover {
-    background-color: #117a8b;
-}
-
-
-.videos {
-    display: flex;
-    justify-content: space-around; /* Distribute space between video containers */
-    align-items: flex-start; /* Align items to the top */
-    gap: 20px; /* Space between video containers */
-    margin-bottom: 25px;
-    flex-wrap: wrap; /* Allow video containers to wrap on smaller screens */
+.user-id-container input {
+    padding: 8px;
+    width: 200px;
+    text-align: center;
 }
 
 .video-container {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #000;
     border-radius: 8px;
-    padding: 15px;
-    width: calc(50% - 30px); /* Adjust width considering gap and padding */
-    min-width: 280px; /* Minimum width before wrapping */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+#local-video, #remote-video {
+    width: 100%;
+    height: auto;
+}
+
+#local-video-small {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 120px;
+    height: 90px;
+    border: 2px solid #fff;
+    border-radius: 4px;
+}
+
+.actions {
+    margin: 20px 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 15px;
 }
 
-.video-container video {
-    width: 100%;
-    max-width: 400px; /* Max width for video element */
-    height: auto;
-    border-radius: 6px;
-    background-color: #000; /* Background for video area */
-    border: 1px solid #ccc;
+button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
-.call-actions {
-    margin-top: 15px; /* Ensure some space if videos wrap and push this down */
+button:hover {
+    background-color: #2980b9;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .container {
-        margin: 10px;
-        padding: 20px;
-    }
-
-    .videos {
-        flex-direction: column; /* Stack videos vertically */
-        align-items: center; /* Center videos when stacked */
-    }
-
-    .video-container {
-        width: 100%; /* Full width for video containers on small screens */
-        max-width: 450px; /* Control max width even when stacked */
-        margin-bottom: 20px; /* Add space between stacked video containers */
-    }
-    .video-container:last-child {
-        margin-bottom: 0;
-    }
-
-    .call-controls {
-        flex-direction: column; /* Stack call input and buttons */
-    }
-    .call-controls input[type="text"], .call-controls button {
-        width: 100%; /* Full width for controls */
-        margin-bottom: 10px; /* Space between stacked controls */
-    }
-    .call-controls button:last-child {
-        margin-bottom: 0;
-    }
+.connect-to {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
-@media (max-width: 480px) {
-    h1 {
-        font-size: 1.8em;
-    }
-    button {
-        padding: 12px 15px; /* Slightly larger buttons for easier tapping */
-    }
+.connect-to input {
+    padding: 8px;
+    width: 200px;
+}
+
+#status-message {
+    margin: 20px 0;
+    color: #e74c3c;
+    min-height: 24px;
+}
+
+#end-call {
+    background-color: #e74c3c;
+    margin-top: 20px;
+}
+
+#end-call:hover {
+    background-color: #c0392b;
 }
