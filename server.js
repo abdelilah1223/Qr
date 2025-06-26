@@ -38,8 +38,12 @@ wss.on('connection', (ws) => {
       case 'webrtc-offer':
       case 'webrtc-answer':
       case 'ice-candidate':
-      case 'end-call':
         forwardMessage(data.targetId, message);
+        break;
+      case 'end-call': // معالجة خاصة لـ end-call
+        if (data.targetId) {
+          forwardMessage(data.targetId, JSON.stringify({ type: 'end-call' }));
+        }
         break;
     }
   });

@@ -4,6 +4,7 @@ let peerConnection;
 let localStream;
 let remoteStream;
 let isCaller = false;
+let currentTargetId = null; // لتخزين معرف الطرف الآخر في المكالمة الحالية
 
 // تهيئة التطبيق عند تحميل الصفحة
 window.onload = async function() {
@@ -52,7 +53,9 @@ function setupWebSocket() {
                 handleIceCandidate(data);
                 break;
             case 'end-call':
-                endCall();
+                // استدعاء endCall مع isInitiator = false لأن هذا الطرف لم يبدأ الإنهاء
+                endCall(false);
+                showStatus('تم إنهاء المكالمة من الطرف الآخر');
                 break;
         }
     };
@@ -117,6 +120,7 @@ function setupPeerConnection(targetId) {
     peerConnection.ontrack = function(event) {
         remoteStream = event.streams[0];
         document.getElementById('remote-video').srcObject = remoteStream;
+        // التأكد من عرض الفيديو المحلي في شاشة الاتصال
         document.getElementById('local-video-small').srcObject = localStream;
     };
     
@@ -183,7 +187,7 @@ async function handleIceCandidate(data) {
     }
 }
 
-function endCall() {
+function endCall(isInitiator = true) { // إضافة معامل لتحديد من بدأ إنهاء المكالمة
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
@@ -192,13 +196,16 @@ function endCall() {
     document.getElementById('intro-screen').style.display = 'block';
     document.getElementById('call-screen').style.display = 'none';
     document.getElementById('remote-video').srcObject = null;
-    
-    // إعلام الطرف الآخر بإنهاء المكالمة
-    if (socket && socket.readyState === WebSocket.OPEN) {
+    document.getElementById('local-video-small').srcObject = null; // إيقاف الفيديو المحلي الصغير أيضًا
+
+    // إعلام الطرف الآخر بإنهاء المكالمة فقط إذا كان هذا الطرف هو من بدأ الإنهاء
+    if (isInitiator && socket && socket.readyState === WebSocket.OPEN && currentTargetId) {
         socket.send(JSON.stringify({
-            type: 'end-call'
+            type: 'end-call',
+            targetId: currentTargetId // إرسال targetId لإعلام الطرف الآخر
         }));
     }
+    currentTargetId = null; // إعادة تعيين currentTargetId
 }
 
 function copyUserId() {
