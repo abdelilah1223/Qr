@@ -1,1 +1,636 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اتصالات الفيديو - عشوائية وموجهة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --dark: #1a1a2e;
+            --light: #f0f0f0;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .user-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .user-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: var(--dark);
+            padding: 8px 15px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .copy-btn {
+            background: var(--info);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #138496;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-panel {
+            flex: 1;
+        }
+        
+        .video-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--secondary);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .connection-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-weight: bold;
+        }
+        
+        .input-group input {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #3d43b0;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #bd2130;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .video-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .video-box {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .video-title {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .video-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+        }
+        
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+            transform: rotateY(180deg);
+        }
+        
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .status-idle {
+            background: rgba(255, 193, 7, 0.2);
+            color: var(--warning);
+        }
+        
+        .status-connecting {
+            background: rgba(23, 162, 184, 0.2);
+            color: var(--info);
+        }
+        
+        .status-connected {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background: var(--dark);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-success {
+            border-left: 5px solid var(--success);
+        }
+        
+        .notification-error {
+            border-left: 5px solid var(--danger);
+        }
+        
+        .notification-info {
+            border-left: 5px solid var(--info);
+        }
+        
+        .notification-warning {
+            border-left: 5px solid var(--warning);
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 20px;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        
+        .instructions ol {
+            padding-right: 20px;
+            line-height: 1.8;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .video-container {
+                flex-direction: column;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>اتصالات الفيديو المباشرة</h1>
+            <div class="user-info">
+                <div class="user-id">
+                    <span>معرفك:</span>
+                    <span id="userId">جاري التحميل...</span>
+                </div>
+                <button class="copy-btn" id="copyIdBtn">نسخ المعرف</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="panel control-panel">
+                <h2 class="panel-title">لوحة التحكم</h2>
+                
+                <div class="connection-controls">
+                    <div class="input-group">
+                        <label>الاتصال العشوائي مع مستخدم آخر</label>
+                        <button class="btn btn-primary" id="randomCallBtn">
+                            بدء اتصال عشوائي
+                        </button>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>الاتصال باستخدام المعرف</label>
+                        <input type="text" id="targetIdInput" placeholder="أدخل معرف المستخدم">
+                        <button class="btn btn-success" id="directCallBtn">
+                            بدء الاتصال
+                        </button>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>إدارة الاتصال الحالي</label>
+                        <button class="btn btn-danger" id="endCallBtn" disabled>
+                            إنهاء الاتصال
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="status status-idle" id="connectionStatus">
+                    حالة الاتصال: غير متصل
+                </div>
+                
+                <div class="instructions">
+                    <h3>كيفية الاستخدام:</h3>
+                    <ol>
+                        <li>انسخ معرفك وأرسله لشخص ما للاتصال بك مباشرة</li>
+                        <li>يمكنك بدء اتصال عشوائي مع مستخدم آخر متاح</li>
+                        <li>أو أدخل معرف مستخدم معين للاتصال به مباشرة</li>
+                        <li>لإنهاء الاتصال، اضغط على زر إنهاء الاتصال</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="panel video-panel">
+                <h2 class="panel-title">مكالمة الفيديو</h2>
+                
+                <div class="video-container">
+                    <div class="video-box">
+                        <div class="video-title">كاميرتك</div>
+                        <div class="video-placeholder" id="localVideoPlaceholder">
+                            جاري تحميل الفيديو المحلي...
+                        </div>
+                        <video id="localVideo" autoplay muted playsinline></video>
+                    </div>
+                    
+                    <div class="video-box">
+                        <div class="video-title">المستخدم الآخر</div>
+                        <div class="video-placeholder" id="remoteVideoPlaceholder">
+                            لا يوجد اتصال نشط
+                        </div>
+                        <video id="remoteVideo" autoplay playsinline></video>
+                    </div>
+                </div>
+                
+                <div class="call-controls">
+                    <button class="btn btn-warning" id="toggleVideoBtn">
+                        إيقاف/تشغيل الفيديو
+                    </button>
+                    <button class="btn btn-warning" id="toggleAudioBtn">
+                        إيقاف/تشغيل الصوت
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>تم تطوير هذا الموقع باستخدام تقنيات WebRTC و WebSockets</p>
+        </footer>
+    </div>
+    
+    <div class="notification" id="notification">
+        <span id="notificationMessage"></span>
+        <button class="notification-close" id="notificationCloseBtn">&times;</button>
+    </div>
 
+    <script>
+        // عناصر DOM
+        const userIdElement = document.getElementById('userId');
+        const copyIdBtn = document.getElementById('copyIdBtn');
+        const randomCallBtn = document.getElementById('randomCallBtn');
+        const directCallBtn = document.getElementById('directCallBtn');
+        const endCallBtn = document.getElementById('endCallBtn');
+        const targetIdInput = document.getElementById('targetIdInput');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const localVideoPlaceholder = document.getElementById('localVideoPlaceholder');
+        const remoteVideoPlaceholder = document.getElementById('remoteVideoPlaceholder');
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+        const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationCloseBtn = document.getElementById('notificationCloseBtn');
+
+        // متغيرات التطبيق
+        let userId = null;
+        let socket = null;
+        let peerConnection = null;
+        let localStream = null;
+        let remoteStream = null;
+        let currentCall = null;
+        let isVideoEnabled = true;
+        let isAudioEnabled = true;
+
+        // تهيئة التطبيق
+        async function init() {
+            // إنشاء اتصال WebSocket
+            socket = new WebSocket('wss://your-websocket-server.com');
+            
+            socket.addEventListener('open', () => {
+                showNotification('تم الاتصال بالسيرفر بنجاح', 'success');
+            });
+            
+            socket.addEventListener('message', handleSocketMessage);
+            
+            socket.addEventListener('close', () => {
+                showNotification('تم قطع الاتصال بالسيرفر', 'error');
+                resetConnection();
+            });
+            
+            socket.addEventListener('error', (error) => {
+                showNotification(`خطأ في الاتصال: ${error.message}`, 'error');
+            });
+            
+            // الحصول على معرف المستخدم من السيرفر
+            setTimeout(() => {
+                // في تطبيق حقيقي، سيرسل السيرفر معرف المستخدم بعد الاتصال
+                userId = generateUserId();
+                userIdElement.textContent = userId;
+                showNotification(`مرحباً! معرفك هو: ${userId}`, 'info');
+            }, 1000);
+            
+            // تهيئة الفيديو المحلي
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                localVideo.srcObject = localStream;
+                localVideoPlaceholder.style.display = 'none';
+            } catch (error) {
+                showNotification(`خطأ في الوصول إلى الكاميرا/الميكروفون: ${error.message}`, 'error');
+                localVideoPlaceholder.textContent = 'تعذر الوصول إلى الكاميرا/الميكروفون';
+            }
+            
+            // إعداد معالجات الأحداث
+            setupEventListeners();
+        }
+        
+        // توليد معرف فريد (في تطبيق حقيقي سيأتي من السيرفر)
+        function generateUserId() {
+            return 'user-' + Math.random().toString(36).substr(2, 8);
+        }
+        
+        // إعداد معالجات الأحداث
+        function setupEventListeners() {
+            copyIdBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(userId);
+                showNotification('تم نسخ المعرف إلى الحافظة', 'success');
+            });
+            
+            randomCallBtn.addEventListener('click', startRandomCall);
+            directCallBtn.addEventListener('click', startDirectCall);
+            endCallBtn.addEventListener('click', endCall);
+            toggleVideoBtn.addEventListener('click', toggleVideo);
+            toggleAudioBtn.addEventListener('click', toggleAudio);
+            notificationCloseBtn.addEventListener('click', () => {
+                notification.classList.remove('show');
+            });
+        }
+        
+        // بدء اتصال عشوائي
+        function startRandomCall() {
+            if (!userId) {
+                showNotification('لم يتم إنشاء معرف المستخدم بعد', 'error');
+                return;
+            }
+            
+            if (currentCall) {
+                showNotification('لديك اتصال نشط بالفعل', 'warning');
+                return;
+            }
+            
+            // إرسال طلب اتصال عشوائي للسيرفر
+            socket.send(JSON.stringify({ 
+                type: 'random-call-request', 
+                userId 
+            }));
+            
+            updateConnectionStatus('جاري البحث عن مستخدم متاح...', 'connecting');
+            showNotification('جاري البحث عن مستخدم متاح للاتصال العشوائي', 'info');
+        }
+        
+        // بدء اتصال موجه
+        function startDirectCall() {
+            const targetId = targetIdInput.value.trim();
+            
+            if (!targetId) {
+                showNotification('الرجاء إدخال معرف المستخدم', 'error');
+                return;
+            }
+            
+            if (targetId === userId) {
+                showNotification('لا يمكنك الاتصال بنفسك', 'error');
+                return;
+            }
+            
+            if (currentCall) {
+                showNotification('لديك اتصال نشط بالفعل', 'warning');
+                return;
+            }
+            
+            // إرسال طلب اتصال للسيرفر
+            socket.send(JSON.stringify({ 
+                type: 'direct-call-request', 
+                userId,
+                targetId
+            }));
+            
+            updateConnectionStatus(`جاري الاتصال بالمستخدم: ${targetId}`, 'connecting');
+            showNotification(`جاري الاتصال بالمستخدم: ${targetId}`, 'info');
+        }
+        
+        // إنهاء الاتصال
+        function endCall() {
+            if (!currentCall) return;
+            
+            // إرسال إشعار إنهاء الاتصال للسيرفر
+            socket.send(JSON.stringify({ 
+                type: 'end-call', 
+                userId,
+                callId: currentCall
+            }));
+            
+            resetConnection();
+            showNotification('تم إنهاء الاتصال', 'info');
+        }
+        
+        // إيقاف/تشغيل الفيديو
+        function toggleVideo() {
+            if (!localStream) return;
+            
+            isVideoEnabled = !isVideoEnabled;
+            localStream.getVideoTracks().forEach(track => {
+                track.enabled = isVideoEnabled;
+            });
+            
+            toggleVideoBtn.textContent = isVideoEnabled ? 
+                'إيقاف الفيديو' : 'تشغيل الفيديو';
+            
+            showNotification(isVideoEnabled ? 
+                'تم تشغيل الفيديو' : 'تم إيقاف الفيديو', 'info');
+        }
+        
+   
